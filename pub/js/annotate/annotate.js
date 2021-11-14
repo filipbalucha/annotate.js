@@ -1,8 +1,86 @@
 document.addEventListener("mouseup", (event) => {
   const selection = window.getSelection();
-  if (selection.toString().length) {
-    // TODO: only allow selection within a given node
-    console.log(selection.anchorNode.isSameNode(selection.focusNode));
-    console.log(selection.toString());
+  const anythingSelected = selection.toString().length;
+  if (anythingSelected) {
+    // TODO: move to a better place
+    const sameNode = selection.anchorNode.isSameNode(selection.focusNode);
+    if (sameNode) {
+      // reconstruct path from root node to this node
+      const path = pathToNode(selection.anchorNode);
+      console.log(path);
+    } else {
+      console.log("Selection must be within the same node.");
+    }
+
+    // TODO: reconstruct path
+
+    // TODO: insert mark
+    // insert into innerHTML
+    // can include \n whereas innerText and selection string does not (check our paras)
+    // need a regex to get matches and indices in innerHTML
   }
 });
+
+// TODO:
+// if need text nodes, check here: https://stackoverflow.com/questions/54809603/select-text-node-using-queryselector
+//    and the assoc. docs here: https://stackoverflow.com/questions/54809603/select-text-node-using-queryselector
+
+// TODO: for sorting nodes
+// console.log(selection.anchorNode.getRootNode());
+// console.log(
+//   selection.anchorNode.compareDocumentPosition(selection.focusNode) &
+//     Node.DOCUMENT_POSITION_FOLLOWING
+// );
+// console.log(
+//   selection.anchorNode.compareDocumentPosition(
+//     document.querySelector("h1")
+//   ) & Node.DOCUMENT_POSITION_FOLLOWING
+// );
+// console.log(
+//   document
+//     .querySelector("h1")
+//     .compareDocumentPosition(selection.anchorNode) &
+//     Node.DOCUMENT_POSITION_FOLLOWING
+// );
+
+// ---------------- ACTUAL CODE ---------------------
+
+/**
+ * Returns the path from node's root element to node. The path is represented
+ * as an array of tuples, where each tuple stores the element's tag name and
+ * its position as child of its parent node.
+ *
+ * Note: Nodes that are not of type Element are ignored so that querySelector
+ * can be used during path reconstruction.
+ *
+ * @param  {Node} node
+ *
+ * @returns {[[string, number]]} The path from node's root to node.
+ */
+const pathToNode = (node) => {
+  const path = [];
+  let currentNode = node;
+  while (currentNode.parentNode) {
+    // only keep Element Nodes so that we can use querySelector
+    if (currentNode.nodeType !== Node.ELEMENT_NODE) {
+      currentNode = currentNode.parentNode;
+      continue;
+    }
+    // determine which child to look at
+    const siblings = currentNode.parentNode.childNodes;
+    let childIdx = 0;
+    for (sibling of siblings) {
+      if (sibling.nodeName === currentNode.nodeName) {
+        if (sibling === currentNode) {
+          break;
+        }
+        childIdx++;
+      }
+    }
+    const tuple = [currentNode.nodeName.toLowerCase(), childIdx];
+    path.push(tuple);
+    currentNode = currentNode.parentNode;
+  }
+  path.reverse();
+  return path;
+};
