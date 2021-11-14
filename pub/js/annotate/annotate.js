@@ -12,18 +12,33 @@ document.addEventListener("mouseup", (event) => {
       console.log("Selection must be within the same node.");
     }
 
-    // TODO: reconstruct path
+    console.log(selection.anchorOffset);
+    console.log(selection.focusOffset);
 
-    // TODO: insert mark
-    // insert into innerHTML
-    // can include \n whereas innerText and selection string does not (check our paras)
-    // need a regex to get matches and indices in innerHTML
+    // TODO: 1. path reconstruction
+
+    // TODO: 2. marks
+    // -> insert: into innerHTML, use anchor node offset
+    // -> how to colour?
+    // -> onClick -> to show tooltip
+
+    // TODO: 3. localstorage
+    // -> store (what does tooltip need?)
+    // -> load
+
+    // TODO: 4. basic tooltip
   }
 });
 
 // TODO:
 // if need text nodes, check here: https://stackoverflow.com/questions/54809603/select-text-node-using-queryselector
 //    and the assoc. docs here: https://stackoverflow.com/questions/54809603/select-text-node-using-queryselector
+
+// TODO: re: marks:
+// Note: should not be a problem
+// -> innerHTML can include \n whereas innerText and selection string does not
+// -> may need a regex to get matches and indices in innerHTML
+// -> likely not a problem because experimentation showed that offsets of Selection work
 
 // TODO: for sorting nodes
 // console.log(selection.anchorNode.getRootNode());
