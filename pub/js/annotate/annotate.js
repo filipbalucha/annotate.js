@@ -6,16 +6,16 @@ document.addEventListener("mouseup", (event) => {
     const sameNode = selection.anchorNode.isSameNode(selection.focusNode);
     if (sameNode) {
       // reconstruct path from root node to this node
-      const path = pathToNode(selection.anchorNode);
+      const path = constructPath(selection.anchorNode);
       console.log(path);
+      const node = retrieveNode(path);
+      console.log(node);
     } else {
       console.log("Selection must be within the same node.");
     }
 
     console.log(selection.anchorOffset);
     console.log(selection.focusOffset);
-
-    // TODO: 1. path reconstruction
 
     // TODO: 2. marks
     // -> insert: into innerHTML, use anchor node offset
@@ -24,9 +24,13 @@ document.addEventListener("mouseup", (event) => {
 
     // TODO: 3. localstorage
     // -> store (what does tooltip need?)
+    //    -> how to retrieve position of text within a node? create a selection from scratch?
     // -> load
 
     // TODO: 4. basic tooltip
+
+    // TODO: 5. fixes:
+    // double click in empty space -> still considered a selection
   }
 });
 
@@ -72,7 +76,7 @@ document.addEventListener("mouseup", (event) => {
  *
  * @returns {[[string, number]]} The path from node's root to node.
  */
-const pathToNode = (node) => {
+const constructPath = (node) => {
   const path = [];
   let currentNode = node;
   while (currentNode.parentNode) {
@@ -98,4 +102,19 @@ const pathToNode = (node) => {
   }
   path.reverse();
   return path;
+};
+
+const retrieveNode = (path) => {
+  try {
+    let node = document;
+    for ([tag, childIdx] of path) {
+      console.log(tag);
+      console.log(childIdx);
+      node = node.getElementsByTagName(tag)[childIdx];
+    }
+    return node;
+  } catch (err) {
+    console.error(err);
+    return;
+  }
 };
