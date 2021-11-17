@@ -1,21 +1,43 @@
+class Annotation {
+  constructor(path, start, end, comment) {
+    this.path = path;
+    this.start = start;
+    this.end = end;
+    this.comment = comment;
+  }
+}
+
+class AnnotationManager {
+  constructor() {
+    this.annotations = [];
+  }
+
+  addAnnotation(annotation) {
+    this.annotations.push(annotation);
+    this.logAnnotations();
+  }
+
+  logAnnotations() {
+    this.annotations.map(console.log);
+  }
+}
+
+const annotationManager = new AnnotationManager();
+
 document.addEventListener("mouseup", (event) => {
   const selection = window.getSelection();
   const anythingSelected = selection.toString().length;
-  if (anythingSelected) {
-    // TODO: move to a better place
-    const sameNode = selection.anchorNode.isSameNode(selection.focusNode);
-    if (sameNode) {
-      // reconstruct path from root node to this node
-      const path = constructPath(selection.anchorNode);
-      console.log(path);
-      const node = retrieveNode(path);
-      console.log(node);
-    } else {
-      console.log("Selection must be within the same node.");
-    }
+  const sameNode = selection.anchorNode.isSameNode(selection.focusNode);
+  if (anythingSelected && sameNode) {
+    // reconstruct path from root node to this node
+    const path = constructPath(selection.anchorNode);
+    const node = retrieveNode(path); // Note: for later usage
 
-    console.log(selection.anchorOffset);
-    console.log(selection.focusOffset);
+    // Note: this is w.r.t. innerHTML, as desired, focusOffset is not inclusive
+    const from = selection.anchorOffset;
+    const to = selection.focusOffset;
+    const annotation = new Annotation(path, from, to);
+    annotationManager.addAnnotation(annotation);
 
     // TODO: 2. marks
     // -> insert: into innerHTML, use anchor node offset
