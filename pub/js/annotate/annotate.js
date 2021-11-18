@@ -2,7 +2,9 @@
 class Annotation {
   constructor(anchorNode, highlightedString, comment) {
     // reconstruct path from root node to this node
-    const path = constructPath(anchorNode);
+    const path = constructPath(anchorNode.parentElement); // TODO: use parentelement here?
+    // TODO:
+    // store position in parent element (TODO: warning - need to guarantee that path reconstruction returns the same thing as parentElement here)
     this.path = path;
     this.highlightedString = highlightedString;
     this.comment = comment;
@@ -58,29 +60,25 @@ class AnnotationManager {
 }
 
 // Helpers
-const constructPath = (node) => {
+const constructPath = (el) => {
   const path = [];
-  let currentNode = node;
-  while (currentNode.parentNode) {
+  let currentEl = el;
+  while (currentEl.parentElement) {
     // only keep Element Nodes so that we can use querySelector
-    if (currentNode.nodeType !== Node.ELEMENT_NODE) {
-      currentNode = currentNode.parentNode;
-      continue;
-    }
     // determine which child to look at
-    const siblings = currentNode.parentNode.childNodes;
+    const siblings = currentEl.parentElement.children;
     let childIdx = 0;
     for (sibling of siblings) {
-      if (sibling.nodeName === currentNode.nodeName) {
-        if (sibling === currentNode) {
+      if (sibling.tagName === currentEl.tagName) {
+        if (sibling === currentEl) {
           break;
         }
         childIdx++;
       }
     }
-    const tuple = [currentNode.nodeName.toLowerCase(), childIdx];
-    path.push(tuple);
-    currentNode = currentNode.parentNode;
+    const pathStep = [currentEl.tagName.toLowerCase(), childIdx];
+    path.push(pathStep);
+    currentEl = currentEl.parentElement;
   }
   path.reverse();
   return path;
@@ -103,11 +101,12 @@ const elementToHighlight = (path) => {
 
 const annotationManager = new AnnotationManager();
 
+// Limitations list:
+// - can only highlight within the same component (don't fix this, it's too complex to fix; having it this way gives us some guarantees re storing highlightedText matches - namely that we can ignore any HTML tags occurring during string search, because a highlight will always be within a single *node* only)
 document.addEventListener("mouseup", (event) => {
   const selection = window.getSelection();
   const anythingSelected = selection.toString().length;
   const sameNode = selection.anchorNode.isSameNode(selection.focusNode);
-
   if (anythingSelected && sameNode) {
     if (Annotation.canHighlight(selection.anchorNode)) {
       const annotation = new Annotation(
@@ -116,8 +115,6 @@ document.addEventListener("mouseup", (event) => {
       );
       annotationManager.addAnnotation(annotation);
     }
-
-    // TODO: 0. commonAncestorContainer to check if start and end are in the same node?
 
     // TODO: 1. string searching algos
     // -> ignore anything inside <span>...</span>
