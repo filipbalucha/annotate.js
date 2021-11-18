@@ -1,10 +1,21 @@
 // Data
 class Annotation {
-  constructor(path, start, end, comment) {
+  constructor(anchorNode, highlightedString, comment) {
+    // reconstruct path from root node to this node
+    const path = constructPath(anchorNode);
     this.path = path;
-    this.start = start;
-    this.end = end;
+    this.highlightedString = highlightedString;
     this.comment = comment;
+  }
+
+  static canHighlight(anchorNode) {
+    const parent = anchorNode.parentElement;
+    if (parent) {
+      const parentHighlighted = parent.classList.contains("annotated");
+      return !parentHighlighted;
+    } else {
+      return true;
+    }
   }
 }
 
@@ -21,18 +32,19 @@ class AnnotationManager {
   }
 
   highlightAnnotation(annotation) {
-    const { path, start, end } = annotation;
+    const { path, highlightedString } = annotation;
     const node = retrieveNode(path); // TODO: take in node during fresh creation (not when coming from local storage)?
 
+    // Determine where to insert highlight
+    const start = node.innerHTML.indexOf(highlightedString);
+    const end = start + highlightedString.length;
+
+    // Add the highlight to innerHTML
     const beforeHighlight = node.innerHTML.substring(0, start);
     const toHighlight = node.innerHTML.substring(start, end);
     const afterHighlight = node.innerHTML.substring(end);
-    console.log(start);
-    console.log(end);
-
     const newHTML = `${beforeHighlight}<span class="annotated" style="background-color: yellow">${toHighlight}</span>${afterHighlight}`;
     node.innerHTML = newHTML;
-    console.log(node);
   }
 
   logAnnotations() {
@@ -92,23 +104,13 @@ document.addEventListener("mouseup", (event) => {
   const sameNode = selection.anchorNode.isSameNode(selection.focusNode);
   console.log(selection.anchorNode.className);
   if (anythingSelected && sameNode) {
-    console.log("anchor");
-    console.log(selection.anchorNode);
-    console.log(selection.getRangeAt(0).startOffset);
-    console.log(selection.getRangeAt(0).startContainer);
-    // reconstruct path from root node to this node
-    const path = constructPath(selection.anchorNode);
-
-    // Note: this is w.r.t. innerHTML, as desired, focusOffset is not inclusive
-    const start = selection.anchorOffset;
-    const end = selection.focusOffset;
-    const annotation = new Annotation(path, start, end);
-    annotationManager.addAnnotation(annotation);
-
-    // TODO: 1. fix problem with highlights
-    // a. prevent overlaps
-    //  -> store mapping from element to [[start,end], ...] (without marks inserted)
-    //  ->
+    if (Annotation.canHighlight(selection.anchorNode)) {
+      const annotation = new Annotation(
+        selection.anchorNode,
+        selection.toString()
+      );
+      annotationManager.addAnnotation(annotation);
+    }
 
     // TODO: 2. marks
     // -> insert: into innerHTML, use anchor node offset
