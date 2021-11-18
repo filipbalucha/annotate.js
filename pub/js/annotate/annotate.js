@@ -9,12 +9,17 @@ class Annotation {
   }
 
   static canHighlight(anchorNode) {
-    const parent = anchorNode.parentElement;
-    if (parent) {
-      const parentHighlighted = parent.classList.contains("annotated");
-      return !parentHighlighted;
+    if (anchorNode.nodeType === Node.ELEMENT_NODE) {
+      const highlighted = anchorNode.classList.contains("annotated");
+      return !highlighted;
     } else {
-      return true;
+      const parent = anchorNode.parentElement;
+      if (parent) {
+        const parentHighlighted = parent.classList.contains("annotated");
+        return !parentHighlighted;
+      } else {
+        return true;
+      }
     }
   }
 }
@@ -27,24 +32,24 @@ class AnnotationManager {
 
   addAnnotation(annotation) {
     this.annotations.push(annotation);
-    this.logAnnotations();
     this.highlightAnnotation(annotation);
   }
 
   highlightAnnotation(annotation) {
     const { path, highlightedString } = annotation;
-    const node = retrieveNode(path); // TODO: take in node during fresh creation (not when coming from local storage)?
+    const element = elementToHighlight(path);
+    console.log(element);
 
     // Determine where to insert highlight
-    const start = node.innerHTML.indexOf(highlightedString);
+    const start = element.innerHTML.indexOf(highlightedString);
     const end = start + highlightedString.length;
 
     // Add the highlight to innerHTML
-    const beforeHighlight = node.innerHTML.substring(0, start);
-    const toHighlight = node.innerHTML.substring(start, end);
-    const afterHighlight = node.innerHTML.substring(end);
+    const beforeHighlight = element.innerHTML.substring(0, start);
+    const toHighlight = element.innerHTML.substring(start, end);
+    const afterHighlight = element.innerHTML.substring(end);
     const newHTML = `${beforeHighlight}<span class="annotated" style="background-color: yellow">${toHighlight}</span>${afterHighlight}`;
-    node.innerHTML = newHTML;
+    element.innerHTML = newHTML;
   }
 
   logAnnotations() {
@@ -81,7 +86,7 @@ const constructPath = (node) => {
   return path;
 };
 
-const retrieveNode = (path) => {
+const elementToHighlight = (path) => {
   try {
     let node = document;
     for ([tag, childIdx] of path) {
@@ -102,7 +107,7 @@ document.addEventListener("mouseup", (event) => {
   const selection = window.getSelection();
   const anythingSelected = selection.toString().length;
   const sameNode = selection.anchorNode.isSameNode(selection.focusNode);
-  console.log(selection.anchorNode.className);
+
   if (anythingSelected && sameNode) {
     if (Annotation.canHighlight(selection.anchorNode)) {
       const annotation = new Annotation(
@@ -111,6 +116,13 @@ document.addEventListener("mouseup", (event) => {
       );
       annotationManager.addAnnotation(annotation);
     }
+
+    // TODO: 0. commonAncestorContainer to check if start and end are in the same node?
+
+    // TODO: 1. string searching algos
+    // -> ignore anything inside <span>...</span>
+    // -> findMatchPos
+    // -> getNthMatchIndex(string, highlightText)
 
     // TODO: 2. marks
     // -> insert: into innerHTML, use anchor node offset
