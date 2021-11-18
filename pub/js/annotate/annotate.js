@@ -1,14 +1,54 @@
 // Data
 class Annotation {
-  constructor(anchorNode, highlightedString, comment) {
+  constructor(anchorNode, anchorOffset, highlightedString, comment) {
     // reconstruct path from root node to this node
-    const path = constructPath(anchorNode.parentElement); // TODO: use parentelement here?
-    // TODO:
-    // store position in parent element (TODO: warning - need to guarantee that path reconstruction returns the same thing as parentElement here)
+    // TODO: what if no parentElement? Just ignore it?
+    // TODO: what if anchorNode is an element?
+    const path = constructPath(anchorNode.parentElement);
+
+    // TODO: 1. string searching algos
+
     this.path = path;
     this.highlightedString = highlightedString;
+    const minIdx = this.findIdxInParent(
+      anchorNode,
+      anchorOffset,
+      highlightedString
+    );
+    this.pos = this.findMatchPosInParent(anchorNode, minIdx);
     this.comment = comment;
   }
+
+  findIdxInParent(anchor, anchorOffset, substring) {
+    // Find contents preceding the node
+    const leftSiblingContents = [];
+    let prevSibling = anchor.previousSibling;
+    while (prevSibling) {
+      leftSiblingContents.push(prevSibling.textContent);
+      prevSibling = prevSibling.previousSibling;
+    }
+    leftSiblingContents.reverse();
+
+    // Determine the index of selection within the parent's HTML
+    const parent = anchor.parentElement;
+    let parentHTML = parent.innerHTML;
+    let preAnchorOffset = 0;
+    // Walk the inner HTML from left until anchor
+    for (const content of leftSiblingContents) {
+      preAnchorOffset += parentHTML.indexOf(content);
+    }
+    const offset = preAnchorOffset + anchorOffset;
+    const idxInParent =
+      offset + parentHTML.substring(offset).indexOf(substring);
+
+    console.log(idxInParent);
+
+    // TODO: find number of matches
+  }
+
+  findIdxInParent() {}
+
+  indexOfNthMatch() {}
 
   static canHighlight(anchorNode) {
     if (anchorNode.nodeType === Node.ELEMENT_NODE) {
@@ -111,15 +151,11 @@ document.addEventListener("mouseup", (event) => {
     if (Annotation.canHighlight(selection.anchorNode)) {
       const annotation = new Annotation(
         selection.anchorNode,
+        selection.anchorOffset,
         selection.toString()
       );
       annotationManager.addAnnotation(annotation);
     }
-
-    // TODO: 1. string searching algos
-    // -> ignore anything inside <span>...</span>
-    // -> findMatchPos
-    // -> getNthMatchIndex(string, highlightText)
 
     // TODO: 2. marks
     // -> insert: into innerHTML, use anchor node offset
