@@ -15,38 +15,38 @@ class Annotation {
       anchorOffset,
       highlightedString
     );
+    console.log(minIdx);
     this.pos = this.findMatchPosInParent(anchorNode, minIdx);
     this.comment = comment;
   }
 
   findIdxInParent(anchor, anchorOffset, substring) {
     // Find contents preceding the node
-    const leftSiblingContents = [];
-    let prevSibling = anchor.previousSibling;
-    while (prevSibling) {
-      leftSiblingContents.push(prevSibling.textContent);
-      prevSibling = prevSibling.previousSibling;
+    const leftSiblings = [];
+    let leftSibling = anchor.previousSibling;
+    while (leftSibling) {
+      leftSiblings.push(leftSibling);
+      leftSibling = leftSibling.previousSibling;
     }
-    leftSiblingContents.reverse();
+    leftSiblings.reverse();
 
     // Determine the index of selection within the parent's HTML
     const parent = anchor.parentElement;
-    let parentHTML = parent.innerHTML;
+    const parentHTML = parent.innerHTML;
     let preAnchorOffset = 0;
-    // Walk the inner HTML from left until anchor
-    for (const content of leftSiblingContents) {
-      preAnchorOffset += parentHTML.indexOf(content);
+    for (const leftSibling of leftSiblings) {
+      preAnchorOffset += parentHTML.indexOf(leftSibling.textContent);
     }
     const offset = preAnchorOffset + anchorOffset;
     const idxInParent =
       offset + parentHTML.substring(offset).indexOf(substring);
 
-    console.log(idxInParent);
+    return idxInParent;
 
     // TODO: find number of matches
   }
 
-  findIdxInParent() {}
+  findMatchPosInParent() {}
 
   indexOfNthMatch() {}
 
