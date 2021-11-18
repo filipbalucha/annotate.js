@@ -1,22 +1,27 @@
 // Data
 class Annotation {
-  constructor(anchorNode, anchorOffset, highlightedString, comment) {
-    // reconstruct path from root node to this node
+  constructor(anchor, anchorOffset, highlightedString, comment) {
     // TODO: what if no parentElement? Just ignore it?
-    // TODO: what if anchorNode is an element?
-    const path = constructPath(anchorNode.parentElement);
+    // TODO: what if anchor is an element?
 
-    // TODO: 1. string searching algos
+    // reconstruct path from root node to this node
+    const path = constructPath(anchor.parentElement);
 
-    this.path = path;
-    this.highlightedString = highlightedString;
-    const minIdx = this.findIdxInParent(
-      anchorNode,
+    const parent = anchor.parentElement;
+    const maxIdx = this.findIdxInParent(
+      anchor,
       anchorOffset,
       highlightedString
     );
-    console.log(minIdx);
-    this.pos = this.findMatchPosInParent(anchorNode, minIdx);
+    const beforeAnchorString = parent.innerHTML.substring(0, maxIdx);
+    const matchesBefore = this.matchCount(
+      beforeAnchorString,
+      highlightedString
+    );
+
+    this.path = path;
+    this.highlightedString = highlightedString;
+    this.pos = matchesBefore + 1;
     this.comment = comment;
   }
 
@@ -42,13 +47,23 @@ class Annotation {
       offset + parentHTML.substring(offset).indexOf(substring);
 
     return idxInParent;
-
-    // TODO: find number of matches
   }
 
-  findMatchPosInParent() {}
+  matchCount(string, substring) {
+    let numMatches = 0;
+    let idx = string.indexOf(substring);
+    while (idx !== -1) {
+      string = string.substring(idx + 1);
+      idx = string.indexOf(substring);
+      numMatches++;
+    }
+    return numMatches;
+  }
 
-  indexOfNthMatch() {}
+  indexOfNthMatch(string, substring, n) {
+    // TODO:
+    // numbered from 0 or 1? rn it's 1, might like to 0 (then do not add +1 in constructor)
+  }
 
   static canHighlight(anchorNode) {
     if (anchorNode.nodeType === Node.ELEMENT_NODE) {
@@ -80,7 +95,6 @@ class AnnotationManager {
   highlightAnnotation(annotation) {
     const { path, highlightedString } = annotation;
     const element = elementToHighlight(path);
-    console.log(element);
 
     // Determine where to insert highlight
     const start = element.innerHTML.indexOf(highlightedString);
@@ -145,17 +159,25 @@ const annotationManager = new AnnotationManager();
 // - can only highlight within the same component (don't fix this, it's too complex to fix; having it this way gives us some guarantees re storing highlightedText matches - namely that we can ignore any HTML tags occurring during string search, because a highlight will always be within a single *node* only)
 document.addEventListener("mouseup", (event) => {
   const selection = window.getSelection();
+  const { anchorNode, focusNode } = selection;
+
   const anythingSelected = selection.toString().length;
-  const sameNode = selection.anchorNode.isSameNode(selection.focusNode);
+  const sameNode = anchorNode.isSameNode(focusNode);
+
   if (anythingSelected && sameNode) {
     if (Annotation.canHighlight(selection.anchorNode)) {
-      const annotation = new Annotation(
-        selection.anchorNode,
-        selection.anchorOffset,
-        selection.toString()
-      );
+      const { anchorOffset, focusOffset } = selection;
+
+      // Make sure selection goes from left to right
+      const leftToRight = anchorOffset < focusOffset;
+      const anchor = leftToRight ? selection.anchorNode : selection.focusNode;
+      const offset = leftToRight ? anchorOffset : focusOffset;
+
+      const annotation = new Annotation(anchor, offset, selection.toString());
       annotationManager.addAnnotation(annotation);
     }
+
+    // TODO: 1. fix weird behaviour when there are line breaks
 
     // TODO: 2. marks
     // -> insert: into innerHTML, use anchor node offset
@@ -171,6 +193,8 @@ document.addEventListener("mouseup", (event) => {
 
     // TODO: 5. fixes:
     // double click in empty space -> still considered a selection
+
+    // TODO: 6. make highlight adding async?
   }
 });
 
