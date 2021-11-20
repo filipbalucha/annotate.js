@@ -230,21 +230,69 @@ document.addEventListener("mouseup", (event) => {
 
       const annotation = new Annotation(anchor, offset, selection.toString());
       annotationManager.addAnnotation(annotation);
+
+      // TODO: re-think this:
+
+      // Motivation: If we want to support real-time color changes, we need to insert the <span> node after every highlight, identify it as temp,
+      // and modify it accordingly.
+      // -> need remove highlight function
+
+      // What will the interaction look like?
+      // Adding:
+      // - select text
+      // - pick color
+      // - (add comment)
+      // - click tick to confirm, else it gets removed
+
+      // Modification:
+      // - click on highlighted text
+      // - (change color)
+      // - (change comment)
+      // - NO confirm button
+
+      // If it is annoying, can solve it two ways:
+      // 1. display a less intrusive component
+      // 2. use a flag to enable highlights (easier but less intuitive / worse UX)
+
+      // Prepare the demo tooltip such that it counts on <span> being inserted:
+      // select text
+      // -> create annotation, store it in AnnotationManager.unsavedAnnotation only
+      // -> insert span
+      //    - no color initially
+      //    - attribute unsaved=true
+      //    - onclick = show tooltip (if not already visible)
+      // -> get span's position, display tooltip above it
+      // -> pick color (onclick =>
+      //    - modify own CSS
+      //    - move annotation from unsavedAnnotation to annotations in AnnotationManager (if haven't already done so)
+      //    - set unsaved attribute on span to false
+      // )
+      // TODO: initial tooltip
+      // - create Annotation (like above) -> store it in "tempAnnotation" in AnnotationManager
+      // - get x coordinate of anchor
+      // - display tooltip
+      // -> position using translate
+      // -> put it under a div anchor
+      // -> onclick ->
+      //    1. perform cleanup
+      //       - remove div-anchor child if there is one (improvement: warn if the annotation has a comment)
+      //       - reset tempAnnotation
+      //    2. method in AnnotationManager (pass ID to it):
+      //       - retrieve and remove Annotation from tempAnnotations using ID
+      //       - move it to annotations
+      //       - highlight it
     }
 
-    // TODO: 1. tooltip
+    // TODO: tooltip + mark colouring
 
-    // TODO: 2. mark colouring
+    // TODO: 2. tooltip comments
 
     // TODO: 3. localstorage
     // -> store (what does tooltip need?)
     //    -> how to retrieve position of text within a node? create a selection from scratch?
     // -> load
 
-    // TODO: 4. basic tooltip
-
-    // TODO: 5. fixes:
-    // double click in empty space -> still considered a selection
+    // TODO: 5. basic tooltip
 
     // TODO: 6. make highlight adding async?
   } else {
