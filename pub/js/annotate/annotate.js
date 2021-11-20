@@ -219,9 +219,24 @@ document.addEventListener("mouseup", (event) => {
   const anythingSelected = selection.toString().length;
   const sameNode = anchorNode.isSameNode(focusNode);
 
+  // transform: translate(50 px, 300 px);
+
   if (anythingSelected && sameNode) {
     if (Annotation.canHighlight(selection.anchorNode)) {
       const { anchorOffset, focusOffset } = selection;
+      const tooltip = document.getElementById("__annotate-tooltip__");
+
+      // Display tooltip // TODO: create tooltip manager / move this to a separate method
+      const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
+      const viewportHeight = window.visualViewport.height;
+      const tooltipHeight = 0.15 * viewportHeight;
+      if (y - tooltipHeight < 0) {
+        // Tooltip goes above the viewport, display it below the first line
+        tooltip.style.transform = `translate(min(${x}px,68vw),${y + height}px)`;
+      } else {
+        tooltip.style.transform = `translate(min(${x}px,68vw),calc(${y}px - 100%))`;
+      }
+      tooltip.style.visibility = "";
 
       // Make sure selection goes from left to right
       const leftToRight = anchorOffset < focusOffset;
@@ -231,18 +246,16 @@ document.addEventListener("mouseup", (event) => {
       const annotation = new Annotation(anchor, offset, selection.toString());
       annotationManager.addAnnotation(annotation);
 
-      // TODO: re-think this:
-
       // Motivation: If we want to support real-time color changes, we need to insert the <span> node after every highlight, identify it as temp,
       // and modify it accordingly.
       // -> need remove highlight function
+      // -> can't really do this because then reselecting a different portion of text overlapping the current would not work due them being different nodes
 
       // What will the interaction look like?
       // Adding:
       // - select text
       // - pick color
       // - (add comment)
-      // - click tick to confirm, else it gets removed
 
       // Modification:
       // - click on highlighted text
@@ -250,11 +263,24 @@ document.addEventListener("mouseup", (event) => {
       // - (change comment)
       // - NO confirm button
 
-      // If it is annoying, can solve it two ways:
-      // 1. display a less intrusive component
-      // 2. use a flag to enable highlights (easier but less intuitive / worse UX)
+      // First tooltip:
+      // - create Annotation -> tempAnnotation
+      // - get x coordinate of anchor
+      // - perform cleanup
+      //   -> remove div-anchor child if there is one (improvement: warn if the annotation has a comment)
+      //   -> reset tempAnnotation
+      // - span
+      //   -> pos using translate
+      //   -> put it under a div anchor
+      // - on color pick ->
+      //    2. method in AnnotationManager (pass ID to it):
+      //       - retrieve and remove Annotation from tempAnnotations using ID
+      //       - move it to annotations
+      //       - highlight it
 
-      // Prepare the demo tooltip such that it counts on <span> being inserted:
+      // onclick elsewhere
+      // - if tempAnnotation and toSave -> insert span in its position
+
       // select text
       // -> create annotation, store it in AnnotationManager.unsavedAnnotation only
       // -> insert span
@@ -267,6 +293,10 @@ document.addEventListener("mouseup", (event) => {
       //    - move annotation from unsavedAnnotation to annotations in AnnotationManager (if haven't already done so)
       //    - set unsaved attribute on span to false
       // )
+
+      // If it is annoying, can solve it two ways:
+      // 1. display a less intrusive component
+      // 2. use a flag to enable highlights (easier but less intuitive / worse UX)
     }
 
     // TODO: tooltip + mark colouring
@@ -280,7 +310,9 @@ document.addEventListener("mouseup", (event) => {
 
     // TODO: 5. basic tooltip
 
-    // TODO: 6. make highlight adding async?
+    // TODO: 6. other improvements
+    // - make highlight adding async?
+    // - make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
   } else {
     console.info("Annotate: Please select content within the same element.");
   }
