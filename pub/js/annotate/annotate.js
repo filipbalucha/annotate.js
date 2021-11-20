@@ -9,6 +9,14 @@ class Annotation {
       anchorOffset,
       this.regex
     );
+    this.highlightColor = null;
+    this.id = this.generateRandomId();
+  }
+
+  generateRandomId() {
+    // Adapted from rinogo's answer: https://stackoverflow.com/a/66332305/7427716
+    const id = window.URL.createObjectURL(new Blob([])).substr(-12);
+    return id;
   }
 
   /**
@@ -123,7 +131,7 @@ class Annotation {
    * @memberof Annotation
    */
   static canHighlight(anchorNode) {
-    const highlighted = (el) => el.classList.contains("annotated");
+    const highlighted = (el) => el.classList.contains("__annotate-highlight__");
     if (anchorNode.nodeType === Node.ELEMENT_NODE) {
       return !highlighted(anchorNode);
     } else if (anchorNode.parentElement) {
@@ -136,16 +144,30 @@ class Annotation {
 
 class AnnotationManager {
   constructor() {
-    // TODO: use mapping if Annotation get an ID
-    this.annotations = [];
+    this.annotations = {};
   }
 
-  addAnnotation(annotation) {
-    this.annotations.push(annotation);
+  addAnnotation(annotation, color) {
+    const { path, id } = annotation;
 
-    const element = this.elementWithHighlight(annotation.path);
+    this.annotations[id] = annotation;
+
+    annotation.highlightColor = color;
+
+    const element = this.elementWithHighlight(path);
     const [start, end] = this.whereToInsert(element, annotation);
-    this.insertAnnotationIntoDOM(element, start, end);
+    this.insertAnnotationIntoDOM(element, start, end, id, color);
+  }
+
+  updateColor(annotation, newColor) {
+    const highlights = document.getElementsByClassName(
+      "__annotate-highlight__"
+    );
+    for (const highlight of highlights) {
+      if (highlight.getAttribute("annotate-id") === annotation.id) {
+        highlight.style.backgroundColor = newColor;
+      }
+    }
   }
 
   /**
@@ -185,26 +207,31 @@ class AnnotationManager {
     }
     return node;
   }
+
+  // Functions that manipulate the DOM
   /**
    * Inserts the annotation into the DOM at the position bounded by [start, end)
+   * and marks it with the corresponding annotation's ID.
    *
    * @param  {Element} element
    * @param  {number} start
    * @param  {number} end
+   * @param  {number} id
+   * @param  {string} color
    */
-  insertAnnotationIntoDOM(element, start, end) {
+  insertAnnotationIntoDOM(element, start, end, id, color) {
     // Add the highlight to innerHTML
     const beforeHighlight = element.innerHTML.substring(0, start);
     const toHighlight = element.innerHTML.substring(start, end);
     const afterHighlight = element.innerHTML.substring(end);
-    const newHTML = `${beforeHighlight}<span class="annotated" style="background-color: yellow">${toHighlight}</span>${afterHighlight}`;
+    const newHTML = `${beforeHighlight}<span class="__annotate-highlight__" annotate-id=${id} style="background-color: ${color}">${toHighlight}</span>${afterHighlight}`;
+
     element.innerHTML = newHTML;
   }
-
-  logAnnotations() {
-    this.annotations.map(console.log);
-  }
 }
+
+// TODO:
+const colors = ["yellow", "red"];
 
 // Application
 
@@ -242,39 +269,29 @@ document.addEventListener("mouseup", (event) => {
       const offset = leftToRight ? anchorOffset : focusOffset;
 
       const annotation = new Annotation(anchor, offset, selection.toString());
-      annotationManager.addAnnotation(annotation);
 
-      // Motivation: If we want to support real-time color changes, we need to insert the <span> node after every highlight, identify it as temp,
-      // and modify it accordingly.
-      // -> need remove highlight function
-      // -> can't really do this because then reselecting a different portion of text overlapping the current would not work due them being different nodes
-
-      // What will the interaction look like?
-      // Adding:
-      // - select text
-      // - pick color
-      // - (add comment)
+      const colorButtons =
+        document.getElementsByClassName("__annotate-color__");
+      for (const button of colorButtons) {
+        button.onclick = () => {
+          const idx = parseInt(button.getAttribute("color"));
+          const newColor = colors[idx];
+          if (
+            annotation.highlightColor &&
+            annotation.highlightColor !== newColor
+          ) {
+            annotationManager.updateColor(annotation, newColor);
+          } else {
+            annotationManager.addAnnotation(annotation, newColor);
+          }
+        };
+      }
 
       // Modification:
       // - click on highlighted text
       // - (change color)
       // - (change comment)
       // - NO confirm button
-
-      // First tooltip:
-      // - create Annotation -> tempAnnotation
-      // - get x coordinate of anchor
-      // - perform cleanup
-      //   -> remove div-anchor child if there is one (improvement: warn if the annotation has a comment)
-      //   -> reset tempAnnotation
-      // - span
-      //   -> pos using translate
-      //   -> put it under a div anchor
-      // - on color pick ->
-      //    2. method in AnnotationManager (pass ID to it):
-      //       - retrieve and remove Annotation from tempAnnotations using ID
-      //       - move it to annotations
-      //       - highlight it
 
       // onclick elsewhere
       // - if tempAnnotation and toSave -> insert span in its position
@@ -292,6 +309,10 @@ document.addEventListener("mouseup", (event) => {
       //    - set unsaved attribute on span to false
       // )
 
+      // Motivation: If we want to support real-time color changes, we need to insert the <span> node after every highlight, identify it as temp,
+      // and modify it accordingly. But we can't really do this because then reselecting a different portion of text overlapping the current
+      // would not work due them being different nodes
+
       // If it is annoying, can solve it two ways:
       // 1. display a less intrusive component
       // 2. use a flag to enable highlights (easier but less intuitive / worse UX)
@@ -306,11 +327,15 @@ document.addEventListener("mouseup", (event) => {
     //    -> how to retrieve position of text within a node? create a selection from scratch?
     // -> load
 
+    // TODO: 4. animation
+
     // TODO: 5. basic tooltip
 
     // TODO: 6. other improvements
     // - make highlight adding async?
     // - make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
+
+    // TODO: 7. cleanup - constants for HTML tags and ids; doc strings
   } else {
     console.info("Annotate: Please select content within the same element.");
   }
