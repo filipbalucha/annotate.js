@@ -230,15 +230,23 @@ class AnnotationManager {
   }
 }
 
-// TODO:
-const colors = ["yellow", "red"];
-
 // Application
 
 const annotationManager = new AnnotationManager();
 
-// Limitations list:
-// - can only highlight within the same component (don't fix this, it's too complex to fix; having it this way gives us some guarantees re storing highlightedText matches - namely that we can ignore any HTML tags occurring during string search, because a highlight will always be within a single *node* only)
+window.addEventListener("load", () => {
+  const tooltip = document.getElementById("__annotate-tooltip__");
+  for (let i = 0; i < colors.length; i++) {
+    const color = colors[i];
+    const colorButton = document.createElement("button");
+    colorButton.setAttribute("class", "__annotate-color__");
+    colorButton.setAttribute("color", i);
+    colorButton.style.backgroundColor = color;
+    console.log(colorButton);
+    tooltip.appendChild(colorButton);
+  }
+});
+
 document.addEventListener("mouseup", (event) => {
   const selection = window.getSelection();
   const { anchorNode, focusNode } = selection;

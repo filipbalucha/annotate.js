@@ -2,8 +2,11 @@
 <html>
   <head>
     <title>annotate.js demo</title>
-    <script type="text/javascript" src="js/examples.js"></script>
-    <script type="text/javascript" src="js/annotate/annotate.js"></script>
+    <script>
+      const colors = ["yellow", "red"];
+    </script>
+    <script defer type="text/javascript" src="js/examples.js"></script>
+    <script defer type="text/javascript" src="js/annotate/annotate.js"></script>
     <link rel="stylesheet" href="js/annotate/annotate.css"></script>
   </head>
   <body>
@@ -112,10 +115,6 @@
       himenaeos. Donec eleifend nisi vitae urna dignissim tempor. Duis fringilla
       massa diam.
     </p>
-    <div id="__annotate-tooltip__" style="visibility: hidden">
-      <!-- TODO: create these buttons dynamically based on color map -->
-      <button class="__annotate-color__" color="0" style="background-color: yellow">Yellow</button>
-      <button class="__annotate-color__" color="1" style="background-color: red">Red</button>
-    </div>
+    <div id="__annotate-tooltip__" style="visibility: hidden"/>
   </body>
 </html>
