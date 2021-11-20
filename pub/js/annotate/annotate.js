@@ -267,20 +267,6 @@ document.addEventListener("mouseup", (event) => {
       //    - move annotation from unsavedAnnotation to annotations in AnnotationManager (if haven't already done so)
       //    - set unsaved attribute on span to false
       // )
-      // TODO: initial tooltip
-      // - create Annotation (like above) -> store it in "tempAnnotation" in AnnotationManager
-      // - get x coordinate of anchor
-      // - display tooltip
-      // -> position using translate
-      // -> put it under a div anchor
-      // -> onclick ->
-      //    1. perform cleanup
-      //       - remove div-anchor child if there is one (improvement: warn if the annotation has a comment)
-      //       - reset tempAnnotation
-      //    2. method in AnnotationManager (pass ID to it):
-      //       - retrieve and remove Annotation from tempAnnotations using ID
-      //       - move it to annotations
-      //       - highlight it
     }
 
     // TODO: tooltip + mark colouring
