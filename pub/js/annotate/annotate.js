@@ -219,8 +219,6 @@ document.addEventListener("mouseup", (event) => {
   const anythingSelected = selection.toString().length;
   const sameNode = anchorNode.isSameNode(focusNode);
 
-  // transform: translate(50 px, 300 px);
-
   if (anythingSelected && sameNode) {
     if (Annotation.canHighlight(selection.anchorNode)) {
       const { anchorOffset, focusOffset } = selection;
@@ -236,7 +234,7 @@ document.addEventListener("mouseup", (event) => {
       } else {
         tooltip.style.transform = `translate(min(${x}px,68vw),calc(${y}px - 100%))`;
       }
-      tooltip.style.visibility = "";
+      tooltip.style.visibility = "unset";
 
       // Make sure selection goes from left to right
       const leftToRight = anchorOffset < focusOffset;

@@ -4,6 +4,7 @@
     <title>annotate.js demo</title>
     <script type="text/javascript" src="js/examples.js"></script>
     <script type="text/javascript" src="js/annotate/annotate.js"></script>
+    <link rel="stylesheet" href="js/annotate/annotate.css"></script>
   </head>
   <body>
     <h1>annotate.js</h1>
@@ -111,24 +112,9 @@
       himenaeos. Donec eleifend nisi vitae urna dignissim tempor. Duis fringilla
       massa diam.
     </p>
-    <div
-      id="__annotate-tooltip__"
-      style="
-        background-color: lightgray;
-        height: 15vh;
-        width: 30vw;
-        position: absolute;
-        visibility: hidden;
-        inset: 0 0 0 0;
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-      "
-    />
+    <div id="__annotate-tooltip__" style="visibility: hidden">
+      <button style="background-color: yellow">Yellow</button>
+      <button style="background-color: red">Red</button>
+    </div>
   </body>
 </html>

@@ -1,0 +1,8 @@
+#__annotate-tooltip__ {
+  background-color: lightgray;
+  height: 15vh;
+  width: 30vw;
+  position: absolute;
+  visibility: hidden;
+  inset: 0 0 0 0;
+}
