@@ -1,89 +1,108 @@
 // Data
 class Annotation {
   constructor(anchor, anchorOffset, highlightedString, comment) {
-    // TODO: what if no parentElement? Just ignore it?
-    // TODO: what if anchor is an element?
-
-    // reconstruct path from root node to this node
-    const path = constructPath(anchor.parentElement);
-
-    const parent = anchor.parentElement;
-    const maxIdx = this.findIdxInParent(
-      anchor,
-      anchorOffset,
-      highlightedString
-    );
-    const beforeAnchorString = parent.innerHTML.substring(0, maxIdx);
-    const matchesBefore = this.matchCount(
-      beforeAnchorString,
-      highlightedString
-    );
-
-    this.path = path;
-    this.highlightedString = highlightedString;
-    this.pos = matchesBefore + 1;
+    this.path = pathTo(anchor.parentElement);
     this.comment = comment;
+    this.regex = this.innerHtmlReadyRegex(highlightedString);
+    this.pos = this.positionWithinParentElement(anchor, anchorOffset, this.regex)
   }
 
-  findIdxInParent(anchor, anchorOffset, substring) {
-    // Find contents preceding the node
-    const leftSiblings = [];
+  /**
+   * Returns the position of anchor within its parent element.
+   * 
+   * This is necessary to disambiguate the match within the anchor from matches
+   * occurring earlier in its parent.
+   *
+   * @param {Node} anchor
+   * @param {number} anchorOffset
+   * @param {RegExp} regex
+   * @returns {number}
+   * @memberof Annotation
+   */
+  positionWithinParentElement(anchor, anchorOffset, regex) {
+    const gRegex = new RegExp(regex, "g");
+    const offset = this.preAnchorOffset(anchor) + anchorOffset;
+    const beforeAnchorString = anchor.parentElement.innerHTML.substring(
+      0,
+      offset
+    );
+    const matches = beforeAnchorString.match(gRegex);
+    return matches ? matches.length : 0;
+  }
+
+  
+  /**
+   * Returns a regex corresponding to the input string that can be matched against
+   * innerHTML of a DOM element.
+   * 
+   * Using regex is necessary because innerHTML may contain line breaks and other
+   * spaces that the Selection does not capture.
+   *
+   * @param {string} string
+   * @returns {RegExp}
+   * @memberof Annotation
+   */
+  innerHtmlReadyRegex(string) {
+    // This pattern will ignore space, line feed and other Unicode spaces between the words
+    const pattern = string.replace(/\s+/g, "(\\s+)");
+    const regex = new RegExp(pattern);
+
+    return regex;
+  }
+
+  /**
+   * Computes the offset of the anchor node within its parent element
+   * by iterating over the contents of all its left siblings.
+   *
+   * @param {Node} anchor
+   *
+   * @returns {number}
+   * @memberof Annotation
+   */
+  preAnchorOffset(anchor) {
+    let preAnchorOffset = 0;
     let leftSibling = anchor.previousSibling;
     while (leftSibling) {
-      leftSiblings.push(leftSibling);
+      if (leftSibling.outerHTML) {
+        preAnchorOffset += leftSibling.outerHTML.length;
+      } else if (leftSibling.textContent) {
+        preAnchorOffset += leftSibling.textContent.length;
+      } else {
+        console.error(
+          `Annotate: unsupported node type: ${leftSibling.nodeType}`,
+          leftSibling
+        );
+      }
       leftSibling = leftSibling.previousSibling;
     }
-    leftSiblings.reverse();
-
-    // Determine the index of selection within the parent's HTML
-    const parent = anchor.parentElement;
-    const parentHTML = parent.innerHTML;
-    let preAnchorOffset = 0;
-    for (const leftSibling of leftSiblings) {
-      preAnchorOffset += parentHTML.indexOf(leftSibling.textContent);
-    }
-    const offset = preAnchorOffset + anchorOffset;
-    const idxInParent =
-      offset + parentHTML.substring(offset).indexOf(substring);
-
-    return idxInParent;
+    return preAnchorOffset;
   }
 
-  matchCount(string, substring) {
-    let numMatches = 0;
-    let idx = string.indexOf(substring);
-    while (idx !== -1) {
-      string = string.substring(idx + 1);
-      idx = string.indexOf(substring);
-      numMatches++;
-    }
-    return numMatches;
-  }
-
-  indexOfNthMatch(string, substring, n) {
-    // TODO:
-    // numbered from 0 or 1? rn it's 1, might like to 0 (then do not add +1 in constructor)
-  }
-
+  /**
+   * Returns true if the input node can be highlighted, false otherwise.
+   * A node can be highlighted iff neither it nor its parent are already
+   * highlighted.
+   *
+   * @static
+   * @param {Node} anchorNode
+   * @returns {boolean}
+   * @memberof Annotation
+   */
   static canHighlight(anchorNode) {
+    const highlighted = (el) => el.classList.contains("annotated");
     if (anchorNode.nodeType === Node.ELEMENT_NODE) {
-      const highlighted = anchorNode.classList.contains("annotated");
-      return !highlighted;
+      return !highlighted(anchorNode);
+    } else if (anchorNode.parentElement) {
+      return !highlighted(anchorNode.parentElement);
     } else {
-      const parent = anchorNode.parentElement;
-      if (parent) {
-        const parentHighlighted = parent.classList.contains("annotated");
-        return !parentHighlighted;
-      } else {
-        return true;
-      }
+      return true;
     }
   }
 }
 
 class AnnotationManager {
   constructor() {
-    // TODO: mapping instead?
+    // TODO: use mapping if Annotation get an ID
     this.annotations = [];
   }
 
@@ -93,12 +112,27 @@ class AnnotationManager {
   }
 
   highlightAnnotation(annotation) {
-    const { path, highlightedString } = annotation;
+    const { path, regex, pos } = annotation;
     const element = elementToHighlight(path);
 
     // Determine where to insert highlight
-    const start = element.innerHTML.indexOf(highlightedString);
-    const end = start + highlightedString.length;
+    let idx = 0;
+    let string = element.innerHTML;
+    let matchPos = -1;
+    let match = undefined;
+    while (matchPos !== pos) {
+      match = string.match(regex);
+      string = string.substring(match.index + match[0].length);
+      idx += match.index + match[0].length;
+      matchPos++;
+    }
+    if (match && match.index === -1) {
+      console.error(
+        "Could not highlight annotation: Could not find corresponding match."
+      );
+    }
+    const start = idx - match[0].length;
+    const end = idx;
 
     // Add the highlight to innerHTML
     const beforeHighlight = element.innerHTML.substring(0, start);
@@ -114,7 +148,7 @@ class AnnotationManager {
 }
 
 // Helpers
-const constructPath = (el) => {
+const pathTo = (el) => {
   const path = [];
   let currentEl = el;
   while (currentEl.parentElement) {
@@ -195,6 +229,8 @@ document.addEventListener("mouseup", (event) => {
     // double click in empty space -> still considered a selection
 
     // TODO: 6. make highlight adding async?
+  } else {
+    console.info("Annotate: Please select content within the same element.");
   }
 });
 
