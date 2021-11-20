@@ -1,15 +1,19 @@
 // Data
 class Annotation {
   constructor(anchor, anchorOffset, highlightedString, comment) {
-    this.path = pathTo(anchor.parentElement);
+    this.path = this.pathTo(anchor.parentElement);
     this.comment = comment;
     this.regex = this.innerHtmlReadyRegex(highlightedString);
-    this.pos = this.positionWithinParentElement(anchor, anchorOffset, this.regex)
+    this.pos = this.positionWithinParentElement(
+      anchor,
+      anchorOffset,
+      this.regex
+    );
   }
 
   /**
    * Returns the position of anchor within its parent element.
-   * 
+   *
    * This is necessary to disambiguate the match within the anchor from matches
    * occurring earlier in its parent.
    *
@@ -30,11 +34,10 @@ class Annotation {
     return matches ? matches.length : 0;
   }
 
-  
   /**
    * Returns a regex corresponding to the input string that can be matched against
    * innerHTML of a DOM element.
-   * 
+   *
    * Using regex is necessary because innerHTML may contain line breaks and other
    * spaces that the Selection does not capture.
    *
@@ -77,6 +80,37 @@ class Annotation {
     }
     return preAnchorOffset;
   }
+  /**
+   * Determines the path to node from the root element. The path is a
+   * sequence of steps, where each step is represented by tag name
+   * (this is the tag of the element which we should follow at the given
+   * step) and a number (this is to determine which child with that tag
+   * we should follow)
+   *
+   * @param  {Node} node
+   * @returns {[[string, number]]}
+   */
+  pathTo(node) {
+    const path = [];
+    let currentEl = node;
+    while (currentEl.parentElement) {
+      const siblings = currentEl.parentElement.children;
+      let childIdx = 0;
+      for (const sibling of siblings) {
+        if (sibling.tagName === currentEl.tagName) {
+          if (sibling === currentEl) {
+            break;
+          }
+          childIdx++;
+        }
+      }
+      const pathStep = [currentEl.tagName.toLowerCase(), childIdx];
+      path.push(pathStep);
+      currentEl = currentEl.parentElement;
+    }
+    path.reverse();
+    return path;
+  }
 
   /**
    * Returns true if the input node can be highlighted, false otherwise.
@@ -108,32 +142,57 @@ class AnnotationManager {
 
   addAnnotation(annotation) {
     this.annotations.push(annotation);
-    this.highlightAnnotation(annotation);
+
+    const element = this.elementWithHighlight(annotation.path);
+    const [start, end] = this.whereToInsert(element, annotation);
+    this.insertAnnotationIntoDOM(element, start, end);
   }
 
-  highlightAnnotation(annotation) {
-    const { path, regex, pos } = annotation;
-    const element = elementToHighlight(path);
+  /**
+   * Returns the start and end position of where to insert the annotation in
+   * element.
+   *
+   * @param {Node} element
+   * @param {Annotation} annotation
+   * @returns {[number, number]}
+   * @memberof AnnotationManager
+   */
+  whereToInsert(element, annotation) {
+    const { regex, pos } = annotation;
 
-    // Determine where to insert highlight
-    let idx = 0;
-    let string = element.innerHTML;
+    // Cannot use a global regex here as those do not return index in their matches
     let matchPos = -1;
-    let match = undefined;
+    let start = 0;
+    let end = 0;
     while (matchPos !== pos) {
-      match = string.match(regex);
-      string = string.substring(match.index + match[0].length);
-      idx += match.index + match[0].length;
+      const match = element.innerHTML.substring(end).match(regex);
+      start = end + match.index;
+      end += match.index + match[0].length;
       matchPos++;
     }
-    if (match && match.index === -1) {
-      console.error(
-        "Could not highlight annotation: Could not find corresponding match."
-      );
-    }
-    const start = idx - match[0].length;
-    const end = idx;
 
+    return [start, end];
+  }
+  /**
+   * Determines which element contains the highlight.
+   *
+   * @param  {[[string, number]]} path
+   */
+  elementWithHighlight(path) {
+    let node = document;
+    for (const [tag, childIdx] of path) {
+      node = node.getElementsByTagName(tag)[childIdx];
+    }
+    return node;
+  }
+  /**
+   * Inserts the annotation into the DOM at the position bounded by [start, end)
+   *
+   * @param  {Element} element
+   * @param  {number} start
+   * @param  {number} end
+   */
+  insertAnnotationIntoDOM(element, start, end) {
     // Add the highlight to innerHTML
     const beforeHighlight = element.innerHTML.substring(0, start);
     const toHighlight = element.innerHTML.substring(start, end);
@@ -146,44 +205,6 @@ class AnnotationManager {
     this.annotations.map(console.log);
   }
 }
-
-// Helpers
-const pathTo = (el) => {
-  const path = [];
-  let currentEl = el;
-  while (currentEl.parentElement) {
-    // only keep Element Nodes so that we can use querySelector
-    // determine which child to look at
-    const siblings = currentEl.parentElement.children;
-    let childIdx = 0;
-    for (sibling of siblings) {
-      if (sibling.tagName === currentEl.tagName) {
-        if (sibling === currentEl) {
-          break;
-        }
-        childIdx++;
-      }
-    }
-    const pathStep = [currentEl.tagName.toLowerCase(), childIdx];
-    path.push(pathStep);
-    currentEl = currentEl.parentElement;
-  }
-  path.reverse();
-  return path;
-};
-
-const elementToHighlight = (path) => {
-  try {
-    let node = document;
-    for ([tag, childIdx] of path) {
-      node = node.getElementsByTagName(tag)[childIdx];
-    }
-    return node;
-  } catch (err) {
-    console.error(err);
-    return;
-  }
-};
 
 // Application
 
@@ -211,12 +232,9 @@ document.addEventListener("mouseup", (event) => {
       annotationManager.addAnnotation(annotation);
     }
 
-    // TODO: 1. fix weird behaviour when there are line breaks
+    // TODO: 1. tooltip
 
-    // TODO: 2. marks
-    // -> insert: into innerHTML, use anchor node offset
-    // -> how to colour?
-    // -> onClick -> to show tooltip
+    // TODO: 2. mark colouring
 
     // TODO: 3. localstorage
     // -> store (what does tooltip need?)
