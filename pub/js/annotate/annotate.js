@@ -20,11 +20,11 @@ class Annotation {
     this.id = this.generateRandomId();
   }
 
-  generateRandomId() {
+  generateRandomId = () => {
     // Adapted from rinogo's answer: https://stackoverflow.com/a/66332305/7427716
     const id = window.URL.createObjectURL(new Blob([])).substr(-12);
     return id;
-  }
+  };
 
   /**
    * Returns the position of anchor within its parent element.
@@ -38,7 +38,7 @@ class Annotation {
    * @returns {number}
    * @memberof Annotation
    */
-  positionWithinParentElement(anchor, anchorOffset, regex) {
+  positionWithinParentElement = (anchor, anchorOffset, regex) => {
     const gRegex = new RegExp(regex, "g");
     const offset = this.preAnchorOffset(anchor) + anchorOffset;
     const beforeAnchorString = anchor.parentElement.innerHTML.substring(
@@ -47,7 +47,7 @@ class Annotation {
     );
     const matches = beforeAnchorString.match(gRegex);
     return matches ? matches.length : 0;
-  }
+  };
 
   /**
    * Returns a regex corresponding to the input string that can be matched against
@@ -60,13 +60,13 @@ class Annotation {
    * @returns {RegExp}
    * @memberof Annotation
    */
-  innerHtmlReadyRegex(string) {
+  innerHtmlReadyRegex = (string) => {
     // This pattern will ignore space, line feed and other Unicode spaces between the words
     const pattern = string.replace(/\s+/g, "(\\s+)");
     const regex = new RegExp(pattern);
 
     return regex;
-  }
+  };
 
   /**
    * Computes the offset of the anchor node within its parent element
@@ -77,7 +77,7 @@ class Annotation {
    * @returns {number}
    * @memberof Annotation
    */
-  preAnchorOffset(anchor) {
+  preAnchorOffset = (anchor) => {
     let preAnchorOffset = 0;
     let leftSibling = anchor.previousSibling;
     while (leftSibling) {
@@ -94,7 +94,7 @@ class Annotation {
       leftSibling = leftSibling.previousSibling;
     }
     return preAnchorOffset;
-  }
+  };
   /**
    * Determines the path to node from the root element. The path is a
    * sequence of steps, where each step is represented by tag name
@@ -105,7 +105,7 @@ class Annotation {
    * @param  {Node} node
    * @returns {[[string, number]]}
    */
-  pathTo(node) {
+  pathTo = (node) => {
     const path = [];
     let currentEl = node;
     while (currentEl.parentElement) {
@@ -125,7 +125,7 @@ class Annotation {
     }
     path.reverse();
     return path;
-  }
+  };
 
   /**
    * Returns true if the input node can be highlighted, false otherwise.
@@ -137,7 +137,7 @@ class Annotation {
    * @returns {boolean}
    * @memberof Annotation
    */
-  static canHighlight(anchorNode) {
+  static canHighlight = (anchorNode) => {
     const highlighted = (el) => el.classList.contains(CLASS_HIGHLIGHT);
     if (anchorNode.nodeType === Node.ELEMENT_NODE) {
       return !highlighted(anchorNode);
@@ -146,15 +146,16 @@ class Annotation {
     } else {
       return true;
     }
-  }
+  };
 }
 
 class AnnotationManager {
-  constructor() {
+  constructor(colors) {
+    this.colors = colors;
     this.annotations = {};
   }
 
-  addAnnotation(annotation, color) {
+  addAnnotation = (annotation, color) => {
     const { path, id } = annotation;
 
     this.annotations[id] = annotation;
@@ -164,16 +165,16 @@ class AnnotationManager {
     const element = this.elementWithHighlight(path);
     const [start, end] = this.whereToInsert(element, annotation);
     this.insertAnnotationIntoDOM(element, start, end, id, color);
-  }
+  };
 
-  updateColor(annotation, newColor) {
+  updateColor = (annotation, newColor) => {
     const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
     for (const highlight of highlights) {
       if (highlight.getAttribute("annotate-id") === annotation.id) {
         highlight.style.backgroundColor = newColor;
       }
     }
-  }
+  };
 
   /**
    * Returns the start and end position of where to insert the annotation in
@@ -184,7 +185,7 @@ class AnnotationManager {
    * @returns {[number, number]}
    * @memberof AnnotationManager
    */
-  whereToInsert(element, annotation) {
+  whereToInsert = (element, annotation) => {
     const { regex, pos } = annotation;
 
     // Cannot use a global regex here as those do not return index in their matches
@@ -199,19 +200,19 @@ class AnnotationManager {
     }
 
     return [start, end];
-  }
+  };
   /**
    * Determines which element contains the highlight.
    *
    * @param  {[[string, number]]} path
    */
-  elementWithHighlight(path) {
+  elementWithHighlight = (path) => {
     let node = document;
     for (const [tag, childIdx] of path) {
       node = node.getElementsByTagName(tag)[childIdx];
     }
     return node;
-  }
+  };
 
   // Functions that manipulate the DOM
   /**
@@ -224,7 +225,7 @@ class AnnotationManager {
    * @param  {number} id
    * @param  {string} color
    */
-  insertAnnotationIntoDOM(element, start, end, id, color) {
+  insertAnnotationIntoDOM = (element, start, end, id, color) => {
     // Add the highlight to innerHTML
     const beforeHighlight = element.innerHTML.substring(0, start);
     const toHighlight = element.innerHTML.substring(start, end);
@@ -232,19 +233,22 @@ class AnnotationManager {
     const newHTML = `${beforeHighlight}<span class=${CLASS_HIGHLIGHT} annotate-id=${id} style="background-color: ${color}">${toHighlight}</span>${afterHighlight}`;
 
     element.innerHTML = newHTML;
-  }
+  };
 }
 
 class TooltipManager {
-  constructor() {
+  constructor(colors) {
+    this.colors = colors;
+    this.annotationManager = new AnnotationManager();
+
     this.tooltip = document.getElementById(ID_TOOLTIP);
     this.addColorButtons();
   }
 
   // DOM manipulation:
   addColorButtons = () => {
-    for (let i = 0; i < colors.length; i++) {
-      const color = colors[i];
+    for (let i = 0; i < this.colors.length; i++) {
+      const color = this.colors[i];
       const colorButton = document.createElement("button");
       colorButton.setAttribute("class", CLASS_COLOR_BUTTON);
       colorButton.setAttribute(COLOR_ATTRIBUTE, i);
@@ -253,7 +257,7 @@ class TooltipManager {
     }
   };
 
-  showTooltip(annotation, x, y, lineHeight) {
+  showTooltip = (annotation, x, y, lineHeight) => {
     const viewportHeight = window.visualViewport.height;
     const tooltipHeight = 0.15 * viewportHeight;
 
@@ -273,75 +277,82 @@ class TooltipManager {
     for (const button of colorButtons) {
       button.onclick = () => {
         const idx = parseInt(button.getAttribute(COLOR_ATTRIBUTE));
-        const newColor = colors[idx] || DEFAULT_COLOR;
+        const newColor = this.colors[idx] || DEFAULT_COLOR;
         if (
           annotation.highlightColor &&
           annotation.highlightColor !== newColor
         ) {
-          annotationManager.updateColor(annotation, newColor);
+          this.annotationManager.updateColor(annotation, newColor);
         } else {
-          annotationManager.addAnnotation(annotation, newColor);
+          this.annotationManager.addAnnotation(annotation, newColor);
         }
       };
     }
-  }
+  };
 }
 
-const highlightInteraction = () => {
-  const selection = window.getSelection();
-  const { anchorNode, focusNode } = selection;
-
-  const anythingSelected = selection.toString().length;
-  const sameNode = anchorNode.isSameNode(focusNode);
-
-  if (
-    anythingSelected &&
-    sameNode &&
-    Annotation.canHighlight(selection.anchorNode)
-  ) {
-    // Make sure selection goes from left to right
-    const { anchorOffset, focusOffset } = selection;
-    const leftToRight = anchorOffset < focusOffset;
-    const anchor = leftToRight ? selection.anchorNode : selection.focusNode;
-    const offset = leftToRight ? anchorOffset : focusOffset;
-
-    const annotation = new Annotation(anchor, offset, selection.toString());
-
-    // Display tooltip
-    const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
-    tooltipManager.showTooltip(annotation, x, y, height);
-
-    // TODO:
-    // Modification:
-    // - click on highlighted text
-    // - (change color)
-    // - (change comment)
-
-    // onclick elsewhere
-    // - if tempAnnotation and toSave -> insert span in its position
-
-    // TODO: style color buttons + tooltip
-    // TODO: tooltip reopen
-
-    // TODO: 2. tooltip comments
-
-    // TODO: 3. localstorage
-    // -> store (what does tooltip need?)
-    //    -> how to retrieve position of text within a node? create a selection from scratch?
-    // -> load
-
-    // TODO: 4. animation
-
-    // TODO: 5. basic tooltip
-
-    // TODO: 6. other improvements
-    // - make highlight adding async?
-    // - make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
-
-    // TODO: 7. cleanup - constants for HTML tags and ids; doc strings
-
-    // TODO: 8. extract some parameters such as tooltip height etc.
-  } else {
-    console.info("Annotate: Please select content within the same element.");
+class Annotate {
+  constructor(colors) {
+    this.tooltipManager = new TooltipManager(colors);
+    document.addEventListener("mouseup", this.handleSelection);
   }
-};
+
+  handleSelection = () => {
+    const selection = window.getSelection();
+    const { anchorNode, focusNode } = selection;
+
+    const anythingSelected = selection.toString().length;
+    const sameNode = anchorNode.isSameNode(focusNode);
+
+    const shouldStartHighlightInteraction =
+      anythingSelected &&
+      sameNode &&
+      Annotation.canHighlight(selection.anchorNode);
+    if (shouldStartHighlightInteraction) {
+      // Make sure selection goes from left to right
+      const { anchorOffset, focusOffset } = selection;
+      const leftToRight = anchorOffset < focusOffset;
+      const anchor = leftToRight ? selection.anchorNode : selection.focusNode;
+      const offset = leftToRight ? anchorOffset : focusOffset;
+
+      const annotation = new Annotation(anchor, offset, selection.toString());
+
+      // Display tooltip
+      const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
+      this.tooltipManager.showTooltip(annotation, x, y, height);
+    } else {
+      console.info("Annotate: Please select content within the same element.");
+    }
+  };
+}
+
+// TODO:
+// Modification:
+// - click on highlighted text
+// - (change color)
+// - (change comment)
+
+// onclick elsewhere
+// - if tempAnnotation and toSave -> insert span in its position
+
+// TODO: style color buttons + tooltip
+// TODO: tooltip reopen
+
+// TODO: 2. tooltip comments
+
+// TODO: 3. localstorage
+// -> store (what does tooltip need?)
+//    -> how to retrieve position of text within a node? create a selection from scratch?
+// -> load
+
+// TODO: 4. animation
+
+// TODO: 5. basic tooltip
+
+// TODO: 6. other improvements
+// - make highlight adding async?
+// - make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
+
+// TODO: 7. cleanup - constants for HTML tags and ids; doc strings
+
+// TODO: 8. extract some parameters such as tooltip height etc.
