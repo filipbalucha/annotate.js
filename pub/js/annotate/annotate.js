@@ -153,6 +153,7 @@ class AnnotationManager {
   constructor(colors) {
     this.colors = colors;
     this.annotations = {};
+    this.tooltipManager = new TooltipManager(colors);
   }
 
   addAnnotation = (annotation, color) => {
@@ -165,15 +166,6 @@ class AnnotationManager {
     const element = this.elementWithHighlight(path);
     const [start, end] = this.whereToInsert(element, annotation);
     this.insertAnnotationIntoDOM(element, start, end, id, color);
-  };
-
-  updateColor = (annotation, newColor) => {
-    const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
-    for (const highlight of highlights) {
-      if (highlight.getAttribute("annotate-id") === annotation.id) {
-        highlight.style.backgroundColor = newColor;
-      }
-    }
   };
 
   /**
@@ -214,7 +206,37 @@ class AnnotationManager {
     return node;
   };
 
+  startSelectionInteraction = (selection) => {
+    // Make sure selection goes from left to right
+    const { anchorOffset, focusOffset } = selection;
+    const leftToRight = anchorOffset < focusOffset;
+    const anchor = leftToRight ? selection.anchorNode : selection.focusNode;
+    const offset = leftToRight ? anchorOffset : focusOffset;
+
+    const annotation = new Annotation(anchor, offset, selection.toString());
+
+    // Display tooltip
+    const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
+    this.tooltipManager.showTooltip(
+      annotation,
+      x,
+      y,
+      height,
+      this.updateColor,
+      this.addAnnotation
+    );
+  };
+
   // Functions that manipulate the DOM
+  updateColor = (annotation, newColor) => {
+    const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
+    for (const highlight of highlights) {
+      if (highlight.getAttribute("annotate-id") === annotation.id) {
+        highlight.style.backgroundColor = newColor;
+      }
+    }
+  };
+
   /**
    * Inserts the annotation into the DOM at the position bounded by [start, end)
    * and marks it with the corresponding annotation's ID.
@@ -231,16 +253,16 @@ class AnnotationManager {
     const toHighlight = element.innerHTML.substring(start, end);
     const afterHighlight = element.innerHTML.substring(end);
     const newHTML = `${beforeHighlight}<span class=${CLASS_HIGHLIGHT} annotate-id=${id} style="background-color: ${color}">${toHighlight}</span>${afterHighlight}`;
-
     element.innerHTML = newHTML;
   };
 }
 
+// TODO: annotate -> responsibilities to anotation maanger
+// annotation manager has tooltip manager, passes callbacks to it
+
 class TooltipManager {
   constructor(colors) {
     this.colors = colors;
-    this.annotationManager = new AnnotationManager();
-
     this.tooltip = document.getElementById(ID_TOOLTIP);
     this.addColorButtons();
   }
@@ -257,7 +279,7 @@ class TooltipManager {
     }
   };
 
-  showTooltip = (annotation, x, y, lineHeight) => {
+  showTooltip = (annotation, x, y, lineHeight, updateColor, addAnnotation) => {
     const viewportHeight = window.visualViewport.height;
     const tooltipHeight = 0.15 * viewportHeight;
 
@@ -282,9 +304,9 @@ class TooltipManager {
           annotation.highlightColor &&
           annotation.highlightColor !== newColor
         ) {
-          this.annotationManager.updateColor(annotation, newColor);
+          updateColor(annotation, newColor);
         } else {
-          this.annotationManager.addAnnotation(annotation, newColor);
+          addAnnotation(annotation, newColor);
         }
       };
     }
@@ -293,7 +315,7 @@ class TooltipManager {
 
 class Annotate {
   constructor(colors) {
-    this.tooltipManager = new TooltipManager(colors);
+    this.annotationManager = new AnnotationManager(colors);
     document.addEventListener("mouseup", this.handleSelection);
   }
 
@@ -304,24 +326,12 @@ class Annotate {
     const anythingSelected = selection.toString().length;
     const sameNode = anchorNode.isSameNode(focusNode);
 
-    const shouldStartHighlightInteraction =
+    const shouldStartSelectionInteraction =
       anythingSelected &&
       sameNode &&
       Annotation.canHighlight(selection.anchorNode);
-    if (shouldStartHighlightInteraction) {
-      // Make sure selection goes from left to right
-      const { anchorOffset, focusOffset } = selection;
-      const leftToRight = anchorOffset < focusOffset;
-      const anchor = leftToRight ? selection.anchorNode : selection.focusNode;
-      const offset = leftToRight ? anchorOffset : focusOffset;
-
-      const annotation = new Annotation(anchor, offset, selection.toString());
-
-      // Display tooltip
-      const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
-      this.tooltipManager.showTooltip(annotation, x, y, height);
-    } else {
-      console.info("Annotate: Please select content within the same element.");
+    if (shouldStartSelectionInteraction) {
+      this.annotationManager.startSelectionInteraction(selection);
     }
   };
 }
@@ -358,3 +368,5 @@ class Annotate {
 // TODO: 8. extract some parameters such as tooltip height etc.
 
 // TODO: 9. consider selection across nodes - would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
+
+// TODO: 10. Optimize for multiple sub-pages: store URL, filter out query strings
