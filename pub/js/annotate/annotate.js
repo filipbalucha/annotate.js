@@ -236,10 +236,13 @@ class AnnotationManager {
 }
 
 class TooltipManager {
-  // DOM manipulation:
-  loadTooltip = () => {
+  constructor() {
     this.tooltip = document.getElementById(ID_TOOLTIP);
+    this.addColorButtons();
+  }
 
+  // DOM manipulation:
+  addColorButtons = () => {
     for (let i = 0; i < colors.length; i++) {
       const color = colors[i];
       const colorButton = document.createElement("button");
@@ -283,12 +286,6 @@ class TooltipManager {
     }
   }
 }
-
-// Application
-
-const annotationManager = new AnnotationManager();
-
-const tooltipManager = new TooltipManager();
 
 const highlightInteraction = () => {
   const selection = window.getSelection();
@@ -348,8 +345,3 @@ const highlightInteraction = () => {
     console.info("Annotate: Please select content within the same element.");
   }
 };
-
-// Add event listeners
-window.addEventListener("load", tooltipManager.loadTooltip);
-
-document.addEventListener("mouseup", highlightInteraction);
