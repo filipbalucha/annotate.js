@@ -1,3 +1,10 @@
+// Global constants
+DEFAULT_COLOR = "yellow";
+COLOR_ATTRIBUTE = "annotate-color";
+CLASS_HIGHLIGHT = "__annotate-highlight__";
+ID_TOOLTIP = "__annotate-tooltip__";
+CLASS_COLOR_BUTTON = "__annotate-color__";
+
 // Data
 class Annotation {
   constructor(anchor, anchorOffset, highlightedString, comment) {
@@ -131,7 +138,7 @@ class Annotation {
    * @memberof Annotation
    */
   static canHighlight(anchorNode) {
-    const highlighted = (el) => el.classList.contains("__annotate-highlight__");
+    const highlighted = (el) => el.classList.contains(CLASS_HIGHLIGHT);
     if (anchorNode.nodeType === Node.ELEMENT_NODE) {
       return !highlighted(anchorNode);
     } else if (anchorNode.parentElement) {
@@ -160,9 +167,7 @@ class AnnotationManager {
   }
 
   updateColor(annotation, newColor) {
-    const highlights = document.getElementsByClassName(
-      "__annotate-highlight__"
-    );
+    const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
     for (const highlight of highlights) {
       if (highlight.getAttribute("annotate-id") === annotation.id) {
         highlight.style.backgroundColor = newColor;
@@ -224,9 +229,58 @@ class AnnotationManager {
     const beforeHighlight = element.innerHTML.substring(0, start);
     const toHighlight = element.innerHTML.substring(start, end);
     const afterHighlight = element.innerHTML.substring(end);
-    const newHTML = `${beforeHighlight}<span class="__annotate-highlight__" annotate-id=${id} style="background-color: ${color}">${toHighlight}</span>${afterHighlight}`;
+    const newHTML = `${beforeHighlight}<span class=${CLASS_HIGHLIGHT} annotate-id=${id} style="background-color: ${color}">${toHighlight}</span>${afterHighlight}`;
 
     element.innerHTML = newHTML;
+  }
+}
+
+class TooltipManager {
+  // DOM manipulation:
+  loadTooltip = () => {
+    this.tooltip = document.getElementById(ID_TOOLTIP);
+
+    for (let i = 0; i < colors.length; i++) {
+      const color = colors[i];
+      const colorButton = document.createElement("button");
+      colorButton.setAttribute("class", CLASS_COLOR_BUTTON);
+      colorButton.setAttribute(COLOR_ATTRIBUTE, i);
+      colorButton.style.backgroundColor = color;
+      this.tooltip.appendChild(colorButton);
+    }
+  };
+
+  showTooltip(annotation, x, y, lineHeight) {
+    const viewportHeight = window.visualViewport.height;
+    const tooltipHeight = 0.15 * viewportHeight;
+
+    const isAboveViewport = y - tooltipHeight < 0;
+    let transform;
+    if (isAboveViewport) {
+      transform = `translate(min(${x}px,68vw),${y + lineHeight}px)`;
+    } else {
+      transform = `translate(min(${x}px,68vw),calc(${y}px - 100%))`;
+    }
+    this.tooltip.style.transform = transform;
+    this.tooltip.style.visibility = "unset";
+
+    // Bind actions to tooltip color buttons
+    const colorButtons =
+      this.tooltip.getElementsByClassName(CLASS_COLOR_BUTTON);
+    for (const button of colorButtons) {
+      button.onclick = () => {
+        const idx = parseInt(button.getAttribute(COLOR_ATTRIBUTE));
+        const newColor = colors[idx] || DEFAULT_COLOR;
+        if (
+          annotation.highlightColor &&
+          annotation.highlightColor !== newColor
+        ) {
+          annotationManager.updateColor(annotation, newColor);
+        } else {
+          annotationManager.addAnnotation(annotation, newColor);
+        }
+      };
+    }
   }
 }
 
@@ -234,99 +288,43 @@ class AnnotationManager {
 
 const annotationManager = new AnnotationManager();
 
-window.addEventListener("load", () => {
-  const tooltip = document.getElementById("__annotate-tooltip__");
-  for (let i = 0; i < colors.length; i++) {
-    const color = colors[i];
-    const colorButton = document.createElement("button");
-    colorButton.setAttribute("class", "__annotate-color__");
-    colorButton.setAttribute("color", i);
-    colorButton.style.backgroundColor = color;
-    console.log(colorButton);
-    tooltip.appendChild(colorButton);
-  }
-});
+const tooltipManager = new TooltipManager();
 
-document.addEventListener("mouseup", (event) => {
+const highlightInteraction = () => {
   const selection = window.getSelection();
   const { anchorNode, focusNode } = selection;
 
   const anythingSelected = selection.toString().length;
   const sameNode = anchorNode.isSameNode(focusNode);
 
-  if (anythingSelected && sameNode) {
-    if (Annotation.canHighlight(selection.anchorNode)) {
-      const { anchorOffset, focusOffset } = selection;
-      const tooltip = document.getElementById("__annotate-tooltip__");
+  if (
+    anythingSelected &&
+    sameNode &&
+    Annotation.canHighlight(selection.anchorNode)
+  ) {
+    // Make sure selection goes from left to right
+    const { anchorOffset, focusOffset } = selection;
+    const leftToRight = anchorOffset < focusOffset;
+    const anchor = leftToRight ? selection.anchorNode : selection.focusNode;
+    const offset = leftToRight ? anchorOffset : focusOffset;
 
-      // Display tooltip // TODO: create tooltip manager / move this to a separate method
-      const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
-      const viewportHeight = window.visualViewport.height;
-      const tooltipHeight = 0.15 * viewportHeight;
-      if (y - tooltipHeight < 0) {
-        // Tooltip goes above the viewport, display it below the first line
-        tooltip.style.transform = `translate(min(${x}px,68vw),${y + height}px)`;
-      } else {
-        tooltip.style.transform = `translate(min(${x}px,68vw),calc(${y}px - 100%))`;
-      }
-      tooltip.style.visibility = "unset";
+    const annotation = new Annotation(anchor, offset, selection.toString());
 
-      // Make sure selection goes from left to right
-      const leftToRight = anchorOffset < focusOffset;
-      const anchor = leftToRight ? selection.anchorNode : selection.focusNode;
-      const offset = leftToRight ? anchorOffset : focusOffset;
+    // Display tooltip
+    const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
+    tooltipManager.showTooltip(annotation, x, y, height);
 
-      const annotation = new Annotation(anchor, offset, selection.toString());
+    // TODO:
+    // Modification:
+    // - click on highlighted text
+    // - (change color)
+    // - (change comment)
 
-      const colorButtons =
-        document.getElementsByClassName("__annotate-color__");
-      for (const button of colorButtons) {
-        button.onclick = () => {
-          const idx = parseInt(button.getAttribute("color"));
-          const newColor = colors[idx];
-          if (
-            annotation.highlightColor &&
-            annotation.highlightColor !== newColor
-          ) {
-            annotationManager.updateColor(annotation, newColor);
-          } else {
-            annotationManager.addAnnotation(annotation, newColor);
-          }
-        };
-      }
+    // onclick elsewhere
+    // - if tempAnnotation and toSave -> insert span in its position
 
-      // Modification:
-      // - click on highlighted text
-      // - (change color)
-      // - (change comment)
-      // - NO confirm button
-
-      // onclick elsewhere
-      // - if tempAnnotation and toSave -> insert span in its position
-
-      // select text
-      // -> create annotation, store it in AnnotationManager.unsavedAnnotation only
-      // -> insert span
-      //    - no color initially
-      //    - attribute unsaved=true
-      //    - onclick = show tooltip (if not already visible)
-      // -> get span's position, display tooltip above it
-      // -> pick color (onclick =>
-      //    - modify own CSS
-      //    - move annotation from unsavedAnnotation to annotations in AnnotationManager (if haven't already done so)
-      //    - set unsaved attribute on span to false
-      // )
-
-      // Motivation: If we want to support real-time color changes, we need to insert the <span> node after every highlight, identify it as temp,
-      // and modify it accordingly. But we can't really do this because then reselecting a different portion of text overlapping the current
-      // would not work due them being different nodes
-
-      // If it is annoying, can solve it two ways:
-      // 1. display a less intrusive component
-      // 2. use a flag to enable highlights (easier but less intuitive / worse UX)
-    }
-
-    // TODO: tooltip + mark colouring
+    // TODO: style color buttons + tooltip
+    // TODO: tooltip reopen
 
     // TODO: 2. tooltip comments
 
@@ -344,50 +342,14 @@ document.addEventListener("mouseup", (event) => {
     // - make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
 
     // TODO: 7. cleanup - constants for HTML tags and ids; doc strings
+
+    // TODO: 8. extract some parameters such as tooltip height etc.
   } else {
     console.info("Annotate: Please select content within the same element.");
   }
-});
+};
 
-// TODO:
-// if need text nodes, check here: https://stackoverflow.com/questions/54809603/select-text-node-using-queryselector
-//    and the assoc. docs here: https://stackoverflow.com/questions/54809603/select-text-node-using-queryselector
+// Add event listeners
+window.addEventListener("load", tooltipManager.loadTooltip);
 
-// TODO: re: marks:
-// Note: should not be a problem
-// -> innerHTML can include \n whereas innerText and selection string does not
-// -> may need a regex to get matches and indices in innerHTML
-// -> likely not a problem because experimentation showed that offsets of Selection work
-
-// TODO: for sorting nodes
-// console.log(selection.anchorNode.getRootNode());
-// console.log(
-//   selection.anchorNode.compareDocumentPosition(selection.focusNode) &
-//     Node.DOCUMENT_POSITION_FOLLOWING
-// );
-// console.log(
-//   selection.anchorNode.compareDocumentPosition(
-//     document.querySelector("h1")
-//   ) & Node.DOCUMENT_POSITION_FOLLOWING
-// );
-// console.log(
-//   document
-//     .querySelector("h1")
-//     .compareDocumentPosition(selection.anchorNode) &
-//     Node.DOCUMENT_POSITION_FOLLOWING
-// );
-
-// ---------------- ACTUAL CODE ---------------------
-
-/**
- * Returns the path from node's root element to node. The path is represented
- * as an array of tuples, where each tuple stores the element's tag name and
- * its position as child of its parent node.
- *
- * Note: Nodes that are not of type Element are ignored so that querySelector
- * can be used during path reconstruction.
- *
- * @param  {Node} node
- *
- * @returns {[[string, number]]} The path from node's root to node.
- */
+document.addEventListener("mouseup", highlightInteraction);
