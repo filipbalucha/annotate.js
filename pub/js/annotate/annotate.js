@@ -356,3 +356,5 @@ class Annotate {
 // TODO: 7. cleanup - constants for HTML tags and ids; doc strings
 
 // TODO: 8. extract some parameters such as tooltip height etc.
+
+// TODO: 9. consider selection across nodes - would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
