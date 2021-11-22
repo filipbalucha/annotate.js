@@ -159,13 +159,12 @@ class AnnotationManager {
   addAnnotation = (annotation, color) => {
     const { path, id } = annotation;
 
-    this.annotations[id] = annotation;
-
     annotation.highlightColor = color;
+    this.annotations[id] = annotation;
 
     const element = this.elementWithHighlight(path);
     const [start, end] = this.whereToInsert(element, annotation);
-    this.insertAnnotationIntoDOM(element, start, end, id, color);
+    this.insertAnnotationIntoDOM(element, annotation, start, end);
   };
 
   /**
@@ -193,6 +192,7 @@ class AnnotationManager {
 
     return [start, end];
   };
+
   /**
    * Determines which element contains the highlight.
    *
@@ -247,18 +247,37 @@ class AnnotationManager {
    * @param  {number} id
    * @param  {string} color
    */
-  insertAnnotationIntoDOM = (element, start, end, id, color) => {
-    // Add the highlight to innerHTML
-    const beforeHighlight = element.innerHTML.substring(0, start);
-    const toHighlight = element.innerHTML.substring(start, end);
-    const afterHighlight = element.innerHTML.substring(end);
-    const newHTML = `${beforeHighlight}<span class=${CLASS_HIGHLIGHT} annotate-id=${id} style="background-color: ${color}">${toHighlight}</span>${afterHighlight}`;
-    element.innerHTML = newHTML;
+  insertAnnotationIntoDOM = (element, annotation, start, end) => {
+    const { id, highlightColor } = annotation;
+    // TODO: get selection as argument?
+    const span = document.createElement("span");
+    span.className = CLASS_HIGHLIGHT;
+    span.setAttribute("annotate-id", id); //TODO: string?
+    span.style.backgroundColor = highlightColor;
+    span.onclick = () => {
+      const x = span.offsetLeft;
+      const y = span.offsetTop;
+      const lineHeight = span.offsetHeight;
+
+      this.tooltipManager.showTooltip(
+        annotation,
+        x,
+        y,
+        lineHeight,
+        this.updateColor,
+        this.addAnnotation
+      );
+    };
+
+    const selection = window.getSelection();
+    if (selection.rangeCount) {
+      const range = selection.getRangeAt(0).cloneRange();
+      range.surroundContents(span);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
   };
 }
-
-// TODO: annotate -> responsibilities to anotation maanger
-// annotation manager has tooltip manager, passes callbacks to it
 
 class TooltipManager {
   constructor(colors) {
@@ -304,9 +323,12 @@ class TooltipManager {
           annotation.highlightColor &&
           annotation.highlightColor !== newColor
         ) {
+          annotation.highlightColor = newColor;
           updateColor(annotation, newColor);
         } else {
           addAnnotation(annotation, newColor);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
         }
       };
     }
@@ -323,30 +345,27 @@ class Annotate {
     const selection = window.getSelection();
     const { anchorNode, focusNode } = selection;
 
-    const anythingSelected = selection.toString().length;
-    const sameNode = anchorNode.isSameNode(focusNode);
-
     const shouldStartSelectionInteraction =
-      anythingSelected &&
-      sameNode &&
+      selection.toString().length &&
+      anchorNode.isSameNode(focusNode) &&
       Annotation.canHighlight(selection.anchorNode);
+
     if (shouldStartSelectionInteraction) {
       this.annotationManager.startSelectionInteraction(selection);
     }
   };
 }
 
+// TODO: style:
+// - color buttons
+// - tooltip (fix alignment between tooltip 1 and 2)
+
 // TODO:
-// Modification:
-// - click on highlighted text
-// - (change color)
-// - (change comment)
+// - clean up arguments, remove unnecessary methods
 
-// onclick elsewhere
-// - if tempAnnotation and toSave -> insert span in its position
+// TODO: 0. onclick elsewhere => hide tooltip
 
-// TODO: style color buttons + tooltip
-// TODO: tooltip reopen
+// TODO: 1. how to freeze selection / make it stay as long as tooltip is open?
 
 // TODO: 2. tooltip comments
 
@@ -356,8 +375,6 @@ class Annotate {
 // -> load
 
 // TODO: 4. animation
-
-// TODO: 5. basic tooltip
 
 // TODO: 6. other improvements
 // - make highlight adding async?
