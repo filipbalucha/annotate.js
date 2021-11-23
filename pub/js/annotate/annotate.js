@@ -162,9 +162,10 @@ class AnnotationManager {
     annotation.highlightColor = color;
     this.annotations[id] = annotation;
 
-    const element = this.elementWithHighlight(path);
-    const [start, end] = this.whereToInsert(element, annotation);
-    this.insertAnnotationIntoDOM(element, annotation, start, end);
+    // TODO: may be useful during reconstruction
+    // const element = this.elementWithHighlight(path);
+    // const [start, end] = this.whereToInsert(element, annotation);
+    this.insertAnnotationIntoDOM(annotation);
   };
 
   /**
@@ -241,22 +242,17 @@ class AnnotationManager {
   };
 
   /**
-   * Inserts the annotation into the DOM at the position bounded by [start, end)
-   * and marks it with the corresponding annotation's ID.
+   * Inserts the annotation into the DOM.
    *
-   * @param  {Element} element
-   * @param  {number} start
-   * @param  {number} end
-   * @param  {number} id
-   * @param  {string} color
+   * @param  {Annotation} annotation
    */
-  insertAnnotationIntoDOM = (element, annotation, start, end) => {
+  insertAnnotationIntoDOM = (annotation) => {
     const { id, highlightColor } = annotation;
 
     // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
     const span = document.createElement("span");
     span.className = CLASS_HIGHLIGHT;
-    span.setAttribute("annotate-id", id); //TODO: string?
+    span.setAttribute("annotate-id", id);
     span.style.backgroundColor = highlightColor;
     span.onclick = () => {
       const x = span.offsetLeft;
@@ -303,8 +299,8 @@ class TooltipManager {
   };
 
   showTooltip = (annotation, x, y, lineHeight, updateColor, addAnnotation) => {
+    // Prevent vertical overflow
     let offsetTop;
-    const viewportHeight = window.visualViewport.height;
     const tooltipHeight = this.tooltip.offsetHeight;
     const scrollTop = document.scrollingElement.scrollTop;
     const isAboveViewport = y - scrollTop - tooltipHeight < 0;
@@ -314,6 +310,7 @@ class TooltipManager {
       offsetTop = y - tooltipHeight;
     }
 
+    // Prevent horizontal overflow
     let offsetLeft;
     const viewportWidth = window.visualViewport.width;
     const tooltipWidth = this.tooltip.offsetWidth;
@@ -372,34 +369,14 @@ class Annotate {
   };
 }
 
-// TODO: style:
-// - color buttons
-// - tooltip (fix alignment between tooltip 1 and 2)
-
 // TODO:
-// - clean up arguments, remove unnecessary methods
-
-// TODO: 0. onclick elsewhere => hide tooltip
-
-// TODO: 1. how to freeze selection / make it stay as long as tooltip is open?
-
-// TODO: 2. tooltip comments
-
-// TODO: 3. localstorage
-// -> store (what does tooltip need?)
-//    -> how to retrieve position of text within a node? create a selection from scratch?
-// -> load
-
-// TODO: 4. animation
-
-// TODO: 6. other improvements
-// - make highlight adding async?
-// - make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
-
-// TODO: 7. cleanup - constants for HTML tags and ids; doc strings
-
-// TODO: 8. extract some parameters such as tooltip height etc.
-
-// TODO: 9. consider selection across nodes - would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
-
-// TODO: 10. Optimize for multiple sub-pages: store URL, filter out query strings
+// - local storage
+//    -> add range when reconstructing selections
+// - tooltip comments
+// - optimize for multiple sub-pages: store URL, filter out query strings
+// - improve UX:
+//    -> onclick elsewhere => hide tooltip
+//    -> freeze selection, make it stay as long as tooltip is open?
+//    -> animations
+//    -> make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
+// - selection across nodes - would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
