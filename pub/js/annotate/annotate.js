@@ -256,8 +256,9 @@ class AnnotationManager {
     span.style.backgroundColor = highlightColor;
 
     span.onclick = () => {
+      const scrollLeft = document.scrollingElement.scrollLeft;
       const scrollTop = document.scrollingElement.scrollTop;
-      const x = span.getBoundingClientRect().x;
+      const x = scrollLeft + span.getBoundingClientRect().x;
       const y = scrollTop + span.getBoundingClientRect().y;
       const lineHeight = span.offsetHeight;
 
