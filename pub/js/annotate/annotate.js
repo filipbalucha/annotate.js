@@ -206,16 +206,17 @@ class AnnotationManager {
     return node;
   };
 
-  startSelectionInteraction = (selection) => {
-    // Make sure selection goes from left to right
+  startSelectionInteraction = () => {
+    const selection = window.getSelection();
     const { anchorOffset, focusOffset } = selection;
+
+    // Make sure selection goes from left to right
     const leftToRight = anchorOffset < focusOffset;
     const anchor = leftToRight ? selection.anchorNode : selection.focusNode;
     const offset = leftToRight ? anchorOffset : focusOffset;
 
     const annotation = new Annotation(anchor, offset, selection.toString());
 
-    // Display tooltip
     const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
     this.tooltipManager.showTooltip(
       annotation,
@@ -249,7 +250,8 @@ class AnnotationManager {
    */
   insertAnnotationIntoDOM = (element, annotation, start, end) => {
     const { id, highlightColor } = annotation;
-    // TODO: get selection as argument?
+
+    // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
     const span = document.createElement("span");
     span.className = CLASS_HIGHLIGHT;
     span.setAttribute("annotate-id", id); //TODO: string?
@@ -303,14 +305,16 @@ class TooltipManager {
     const tooltipHeight = 0.15 * viewportHeight;
 
     const isAboveViewport = y - tooltipHeight < 0;
-    let transform;
+
+    const scrollTop = document.scrollingElement.scrollTop;
+    let offsetTop;
     if (isAboveViewport) {
-      transform = `translate(min(${x}px,68vw),${y + lineHeight}px)`;
+      offsetTop = scrollTop + y + lineHeight;
     } else {
-      transform = `translate(min(${x}px,68vw),calc(${y}px - 100%))`;
+      offsetTop = scrollTop + y - tooltipHeight;
     }
-    this.tooltip.style.transform = transform;
-    this.tooltip.style.visibility = "unset";
+    this.tooltip.style.transform = `translate(min(${x}px, 68vw), ${offsetTop}px`;
+    this.tooltip.style.visibility = "visible";
 
     // Bind actions to tooltip color buttons
     const colorButtons =
@@ -348,10 +352,10 @@ class Annotate {
     const shouldStartSelectionInteraction =
       selection.toString().length &&
       anchorNode.isSameNode(focusNode) &&
-      Annotation.canHighlight(selection.anchorNode);
+      Annotation.canHighlight(anchorNode);
 
     if (shouldStartSelectionInteraction) {
-      this.annotationManager.startSelectionInteraction(selection);
+      this.annotationManager.startSelectionInteraction();
     }
   };
 }
