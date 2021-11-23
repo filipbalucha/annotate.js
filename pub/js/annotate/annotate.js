@@ -385,6 +385,7 @@ class Annotate {
 // - optimize for multiple sub-pages
 //    -> each annotation storage will be bound to a URL (with filtered out query strings, etc.)
 //    -> useful: https://developer.mozilla.org/en-US/docs/Web/API/URL
+// - test it in an isolated scrollable
 // - improve UX:
 //    -> freeze selection, make it stay as long as tooltip is open?
 //    -> animations
