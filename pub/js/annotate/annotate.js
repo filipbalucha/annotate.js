@@ -1,5 +1,5 @@
 // Global constants
-DEFAULT_COLOR = "yellow";
+FALLBACK_COLOR_IDX = 0;
 COLOR_ATTRIBUTE = "annotate-color";
 CLASS_HIGHLIGHT = "__annotate-highlight__";
 ID_TOOLTIP = "__annotate-tooltip__";
@@ -331,7 +331,8 @@ class TooltipManager {
     for (const button of colorButtons) {
       button.onclick = () => {
         const idx = parseInt(button.getAttribute(COLOR_ATTRIBUTE));
-        const newColor = this.colors[idx] || DEFAULT_COLOR;
+        const newColor =
+          this.colors[idx] || this.colors[FALLBACK_COLOR_IDX] || "yellow";
         if (
           annotation.highlightColor &&
           annotation.highlightColor !== newColor
@@ -371,12 +372,18 @@ class Annotate {
 
 // TODO:
 // - local storage
-//    -> add range when reconstructing selections
+//    -> add range when reconstructing selections or do node splitting and insertion using insertBefore (https://developer.mozilla.org/en-US/docs/Web/API/Node/insertBefore)
 // - tooltip comments
-// - optimize for multiple sub-pages: store URL, filter out query strings
+// - tooltip delete button
+//    -> useful: https://stackoverflow.com/questions/1614658/how-do-you-undo-surroundcontents-in-javascript
+// - optimize for multiple sub-pages
+//    -> each annotation storage will be bound to a URL (with filtered out query strings, etc.)
+//    -> useful: https://developer.mozilla.org/en-US/docs/Web/API/URL
 // - improve UX:
 //    -> onclick elsewhere => hide tooltip
 //    -> freeze selection, make it stay as long as tooltip is open?
 //    -> animations
 //    -> make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
-// - selection across nodes - would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
+// - selection across nodes
+//    -> would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
+//    -> another problem: span layering -> how to handle what was clicked? What if a highlight is immersed in a large highlight? we'd need to make sure its event listener gets fired

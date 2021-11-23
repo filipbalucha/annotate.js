@@ -24,3 +24,11 @@
 #__annotate-tooltip__ .__annotate-color__:hover {
   cursor: pointer;
 }
+
+.__annotate-highlight__ {
+  cursor: pointer;
+}
+
+.__annotate-highlight__:hover {
+  filter: brightness(95%);
+}
