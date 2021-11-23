@@ -218,10 +218,12 @@ class AnnotationManager {
     const annotation = new Annotation(anchor, offset, selection.toString());
 
     const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
+    const scrollTop = document.scrollingElement.scrollTop;
+    const scrollLeft = document.scrollingElement.scrollLeft;
     this.tooltipManager.showTooltip(
       annotation,
-      x,
-      y,
+      x + scrollLeft,
+      y + scrollTop,
       height,
       this.updateColor,
       this.addAnnotation
@@ -301,19 +303,29 @@ class TooltipManager {
   };
 
   showTooltip = (annotation, x, y, lineHeight, updateColor, addAnnotation) => {
-    const viewportHeight = window.visualViewport.height;
-    const tooltipHeight = 0.05 * viewportHeight;
-
-    const isAboveViewport = y - tooltipHeight < 0;
-
-    const scrollTop = document.scrollingElement.scrollTop;
     let offsetTop;
+    const viewportHeight = window.visualViewport.height;
+    const tooltipHeight = this.tooltip.offsetHeight;
+    const scrollTop = document.scrollingElement.scrollTop;
+    const isAboveViewport = y - scrollTop - tooltipHeight < 0;
     if (isAboveViewport) {
-      offsetTop = scrollTop + y + lineHeight;
+      offsetTop = y + lineHeight;
     } else {
-      offsetTop = scrollTop + y - tooltipHeight;
+      offsetTop = y - tooltipHeight;
     }
-    this.tooltip.style.transform = `translate(min(${x}px, 68vw), ${offsetTop}px`;
+
+    let offsetLeft;
+    const viewportWidth = window.visualViewport.width;
+    const tooltipWidth = this.tooltip.offsetWidth;
+    const scrollLeft = document.scrollingElement.scrollLeft;
+    const isBeyondViewport = x - scrollLeft + tooltipWidth > viewportWidth;
+    if (isBeyondViewport) {
+      offsetLeft = scrollLeft + viewportWidth - tooltipWidth;
+    } else {
+      offsetLeft = x;
+    }
+
+    this.tooltip.style.transform = `translate(${offsetLeft}px, ${offsetTop}px`;
     this.tooltip.style.visibility = "visible";
 
     // Bind actions to tooltip color buttons
