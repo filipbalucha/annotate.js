@@ -254,9 +254,11 @@ class AnnotationManager {
     span.className = CLASS_HIGHLIGHT;
     span.setAttribute("annotate-id", id);
     span.style.backgroundColor = highlightColor;
+
     span.onclick = () => {
-      const x = span.offsetLeft;
-      const y = span.offsetTop;
+      const scrollTop = document.scrollingElement.scrollTop;
+      const x = span.getBoundingClientRect().x;
+      const y = scrollTop + span.getBoundingClientRect().y;
       const lineHeight = span.offsetHeight;
 
       this.tooltipManager.showTooltip(
