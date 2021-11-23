@@ -302,7 +302,7 @@ class TooltipManager {
 
   showTooltip = (annotation, x, y, lineHeight, updateColor, addAnnotation) => {
     const viewportHeight = window.visualViewport.height;
-    const tooltipHeight = 0.15 * viewportHeight;
+    const tooltipHeight = 0.05 * viewportHeight;
 
     const isAboveViewport = y - tooltipHeight < 0;
 

@@ -1,8 +1,24 @@
 #__annotate-tooltip__ {
   background-color: lightgray;
-  height: 15vh;
-  width: 30vw;
+  height: 5vh;
+  width: 15vw;
   position: absolute;
-  visibility: hidden;
   inset: 0 0 0 0;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: scroll;
+}
+
+#__annotate-tooltip__ .__annotate-color__ {
+  border-radius: 50%;
+  border: none;
+  height: 1rem;
+  width: 1rem;
+  margin: 5px 2.5px 5px 2.5px;
+}
+
+#__annotate-tooltip__ .__annotate-color__:hover {
+  cursor: pointer;
 }
