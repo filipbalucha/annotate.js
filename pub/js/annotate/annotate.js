@@ -350,12 +350,13 @@ class TooltipManager {
 }
 
 class Annotate {
+  // TODO: merge Annotate and AnnotateManager?
   constructor(colors) {
     this.annotationManager = new AnnotationManager(colors);
     document.addEventListener("mouseup", this.handleSelection);
   }
 
-  handleSelection = () => {
+  handleSelection = (event) => {
     const selection = window.getSelection();
     const { anchorNode, focusNode } = selection;
 
@@ -366,6 +367,8 @@ class Annotate {
 
     if (shouldStartSelectionInteraction) {
       this.annotationManager.startSelectionInteraction();
+    } else if (!event.target.classList.contains(CLASS_COLOR_BUTTON)) {
+      document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager
     }
   };
 }
@@ -380,7 +383,6 @@ class Annotate {
 //    -> each annotation storage will be bound to a URL (with filtered out query strings, etc.)
 //    -> useful: https://developer.mozilla.org/en-US/docs/Web/API/URL
 // - improve UX:
-//    -> onclick elsewhere => hide tooltip
 //    -> freeze selection, make it stay as long as tooltip is open?
 //    -> animations
 //    -> make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
