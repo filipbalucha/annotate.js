@@ -180,7 +180,7 @@ class AnnotationManager {
     this.tooltipManager = new TooltipManager(colors);
   }
 
-  addAnnotation = (annotation, color) => {
+  addAnnotation = (annotation: Annotation, color: Color): void => {
     const { path, id } = annotation;
 
     annotation.highlightColor = color;
@@ -241,6 +241,7 @@ class AnnotationManager {
     const offset = leftToRight ? anchorOffset : focusOffset;
 
     const annotation = new Annotation(anchor, offset, selection.toString());
+    console.log(annotation)
 
     const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
     const scrollTop = document.scrollingElement.scrollTop;
@@ -384,25 +385,33 @@ class TooltipManager {
 class Annotate {
   annotationManager: AnnotationManager;
 
-  // TODO: merge Annotate and AnnotateManager?
   constructor(colors: Color[]) {
+    // TODO: merge Annotate and AnnotateManager?
     this.annotationManager = new AnnotationManager(colors);
     document.addEventListener("mouseup", this.handleSelection);
+
+
   }
 
   handleSelection = (event: MouseEvent): void => {
     const selection = window.getSelection();
     const { anchorNode, focusNode } = selection;
 
+    const tooltip = document.getElementById(ID_TOOLTIP)
+    const target = event.target as Element
+    const clickedTooltip = tooltip && tooltip.contains(target)
+    if (clickedTooltip) {
+      document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager
+    }
+
     const shouldStartSelectionInteraction =
       selection.toString().length &&
       anchorNode.isSameNode(focusNode) &&
-      Annotation.canHighlight(anchorNode);
+      Annotation.canHighlight(anchorNode) &&
+      !clickedTooltip;
 
     if (shouldStartSelectionInteraction) {
       this.annotationManager.startSelectionInteraction();
-    } else if (!(event.target as Element).classList.contains(CLASS_COLOR_BUTTON)) {
-      document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager
     }
   };
 }
