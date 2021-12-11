@@ -132,7 +132,7 @@ class Annotation {
     while (currentEl.parentElement) {
       const siblings = currentEl.parentElement.children;
       let childIdx = 0;
-      for (let i; i < siblings.length; i++) {
+      for (let i = 0; i < siblings.length; i++) {
         const sibling = siblings[i]
         if (sibling.tagName === currentEl.tagName) {
           if (sibling === currentEl) {
@@ -197,7 +197,7 @@ class AnnotationManager {
         const annotation = Annotation.fromJSON(window.localStorage.getItem(id))
         console.log(annotation)
         console.log(annotation.regex)
-        // this.insertAnnotationFromLocalStorageIntoDOM()
+        this.insertAnnotationFromLocalStorageIntoDOM(annotation)
       } catch (e) {
         console.error('Could not parse annotation')
         console.error(e)
@@ -207,19 +207,53 @@ class AnnotationManager {
   }
 
 
-  insertAnnotationFromLocalStorageIntoDOM = () => {
+  insertAnnotationFromLocalStorageIntoDOM = (annotation) => {
+    const { id, highlightColor, path } = annotation;
 
+    // TODO: reuse this code block
+    // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
+    // const span = document.createElement("span");
+    // span.className = CLASS_HIGHLIGHT;
+    // span.setAttribute("annotate-id", id);
+    // span.style.backgroundColor = highlightColor;
+
+    // span.onclick = () => {
+    //   const scrollLeft = document.scrollingElement.scrollLeft;
+    //   const scrollTop = document.scrollingElement.scrollTop;
+    //   const x = scrollLeft + span.getBoundingClientRect().x;
+    //   const y = scrollTop + span.getBoundingClientRect().y;
+    //   const lineHeight = span.offsetHeight;
+
+    //   this.tooltipManager.showTooltip(
+    //     annotation,
+    //     x,
+    //     y,
+    //     lineHeight,
+    //     this.updateColor,
+    //     this.addAnnotation
+    //   );
+    // };
+    // TODO: end reuse this code block
+
+    // TODO: may be useful during reconstruction
+    const element = this.elementWithHighlight(path);
+    console.log(element)
+    console.log(typeof element)
+    console.log(Object.keys(element))
+    // const [start, end] = this.whereToInsert(element, annotation);
+
+    // get element using path
+    // create span
+    // insert span
   }
 
   addAnnotation = (annotation: Annotation, color: Color): void => {
-    const { path, id } = annotation;
+    const { id } = annotation;
 
     annotation.highlightColor = color;
     this.annotations[id] = annotation;
+    this.elementWithHighlight(annotation.path);
 
-    // TODO: may be useful during reconstruction
-    // const element = this.elementWithHighlight(path);
-    // const [start, end] = this.whereToInsert(element, annotation);
     this.insertAnnotationFromSelectionIntoDOM(annotation);
   };
 
@@ -306,7 +340,7 @@ class AnnotationManager {
    *
    * @param  {Annotation} annotation
    */
-  insertAnnotationFromSelectionIntoDOM = (annotation: Annotation) => { // TODO: rename
+  insertAnnotationFromSelectionIntoDOM = (annotation: Annotation) => {
     const { id, highlightColor } = annotation;
 
     // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
