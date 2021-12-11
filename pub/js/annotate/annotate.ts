@@ -22,7 +22,6 @@ class Annotation {
   pos: number;
   highlightColor: Color;
   anchorOffset: number;
-  highlightedString: string;
   id: string;
 
 
@@ -195,8 +194,6 @@ class AnnotationManager {
       try {
         const id = window.localStorage.key(i)
         const annotation = Annotation.fromJSON(window.localStorage.getItem(id))
-        console.log(annotation)
-        console.log(annotation.regex)
         this.insertAnnotationFromLocalStorageIntoDOM(annotation)
       } catch (e) {
         console.error('Could not parse annotation')
@@ -207,44 +204,23 @@ class AnnotationManager {
   }
 
 
-  insertAnnotationFromLocalStorageIntoDOM = (annotation) => {
-    const { id, highlightColor, path } = annotation;
+  insertAnnotationFromLocalStorageIntoDOM = (annotation: Annotation) => {
+    const { path } = annotation;
 
-    // TODO: reuse this code block
-    // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
-    // const span = document.createElement("span");
-    // span.className = CLASS_HIGHLIGHT;
-    // span.setAttribute("annotate-id", id);
-    // span.style.backgroundColor = highlightColor;
+    const element = this.elementWithHighlight(path) as Element;
+    if (!element) {
+      console.error('Could not find Annotation on the webpage. Annotate.js does not work on webpages whose content changes dynamically.')
+    }
 
-    // span.onclick = () => {
-    //   const scrollLeft = document.scrollingElement.scrollLeft;
-    //   const scrollTop = document.scrollingElement.scrollTop;
-    //   const x = scrollLeft + span.getBoundingClientRect().x;
-    //   const y = scrollTop + span.getBoundingClientRect().y;
-    //   const lineHeight = span.offsetHeight;
+    // Manually create a selection
+    const [start, end] = this.whereToInsert(element, annotation);
+    (element.firstChild as Text).splitText(end);
+    const center = (element.firstChild as Text).splitText(start)
 
-    //   this.tooltipManager.showTooltip(
-    //     annotation,
-    //     x,
-    //     y,
-    //     lineHeight,
-    //     this.updateColor,
-    //     this.addAnnotation
-    //   );
-    // };
-    // TODO: end reuse this code block
-
-    // TODO: may be useful during reconstruction
-    const element = this.elementWithHighlight(path);
-    console.log(element)
-    console.log(typeof element)
-    console.log(Object.keys(element))
-    // const [start, end] = this.whereToInsert(element, annotation);
-
-    // get element using path
-    // create span
-    // insert span
+    const range = document.createRange();
+    range.selectNode(center);
+    this.insertAnnotationFromSelectionIntoDOM(annotation) // TODO: make this accept range (curr. uses selection) - test first if it doesn't break what's there
+    // TODO: rename functions
   }
 
   addAnnotation = (annotation: Annotation, color: Color): void => {
@@ -288,12 +264,15 @@ class AnnotationManager {
    *
    * @param  {[[string, number]]} path
    */
-  elementWithHighlight = (path) => {
-    let node = document;
+  elementWithHighlight = (path: Path): Element => {
+    if (path.length === 0) {
+      return null;
+    }
+    let node = document as unknown as Element;
     for (const [tag, childIdx] of path) {
       node = node.getElementsByTagName(tag)[childIdx];
     }
-    return node;
+    return node as Element;
   };
 
   startSelectionInteraction = () => {
@@ -486,6 +465,10 @@ class Annotate {
 }
 
 // TODO:
+// - easy bugs
+// -> clicking elsewhere not working
+// -> selecting other text not working
+
 // - local storage
 //    -> add range when reconstructing selections or do node splitting and insertion using insertBefore (https://developer.mozilla.org/en-US/docs/Web/API/Node/insertBefore)
 // - tooltip comments
