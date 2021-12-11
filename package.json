@@ -4,11 +4,18 @@
   "description": "The server serving examples for the library annotate.js.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "listen-ts": "tsc -watch pub/js/annotate/annotate.ts",
+    "listen-server": "nodemon server.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.3"
   }
 }

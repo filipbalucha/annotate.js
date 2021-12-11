@@ -1,381 +1,340 @@
+"use strict";
 // Global constants
-FALLBACK_COLOR_IDX = 0;
-COLOR_ATTRIBUTE = "annotate-color";
-CLASS_HIGHLIGHT = "__annotate-highlight__";
-ID_TOOLTIP = "__annotate-tooltip__";
-CLASS_COLOR_BUTTON = "__annotate-color__";
-
-// Data
-class Annotation {
-  constructor(anchor, anchorOffset, highlightedString, comment) {
-    this.path = this.pathTo(anchor.parentElement);
-    this.comment = comment;
-    this.regex = this.innerHtmlReadyRegex(highlightedString);
-    this.pos = this.positionWithinParentElement(
-      anchor,
-      anchorOffset,
-      this.regex
-    );
-    this.highlightColor = null;
-    this.id = this.generateRandomId();
-  }
-
-  generateRandomId = () => {
-    // Adapted from rinogo's answer: https://stackoverflow.com/a/66332305/7427716
-    const id = window.URL.createObjectURL(new Blob([])).substr(-12);
-    return id;
-  };
-
-  /**
-   * Returns the position of anchor within its parent element.
-   *
-   * This is necessary to disambiguate the match within the anchor from matches
-   * occurring earlier in its parent.
-   *
-   * @param {Node} anchor
-   * @param {number} anchorOffset
-   * @param {RegExp} regex
-   * @returns {number}
-   * @memberof Annotation
-   */
-  positionWithinParentElement = (anchor, anchorOffset, regex) => {
-    const gRegex = new RegExp(regex, "g");
-    const offset = this.preAnchorOffset(anchor) + anchorOffset;
-    const beforeAnchorString = anchor.parentElement.innerHTML.substring(
-      0,
-      offset
-    );
-    const matches = beforeAnchorString.match(gRegex);
-    return matches ? matches.length : 0;
-  };
-
-  /**
-   * Returns a regex corresponding to the input string that can be matched against
-   * innerHTML of a DOM element.
-   *
-   * Using regex is necessary because innerHTML may contain line breaks and other
-   * spaces that the Selection does not capture.
-   *
-   * @param {string} string
-   * @returns {RegExp}
-   * @memberof Annotation
-   */
-  innerHtmlReadyRegex = (string) => {
-    // This pattern will ignore space, line feed and other Unicode spaces between the words
-    const pattern = string.replace(/\s+/g, "(\\s+)");
-    const regex = new RegExp(pattern);
-
-    return regex;
-  };
-
-  /**
-   * Computes the offset of the anchor node within its parent element
-   * by iterating over the contents of all its left siblings.
-   *
-   * @param {Node} anchor
-   *
-   * @returns {number}
-   * @memberof Annotation
-   */
-  preAnchorOffset = (anchor) => {
-    let preAnchorOffset = 0;
-    let leftSibling = anchor.previousSibling;
-    while (leftSibling) {
-      if (leftSibling.outerHTML) {
-        preAnchorOffset += leftSibling.outerHTML.length;
-      } else if (leftSibling.textContent) {
-        preAnchorOffset += leftSibling.textContent.length;
-      } else {
-        console.error(
-          `Annotate: unsupported node type: ${leftSibling.nodeType}`,
-          leftSibling
-        );
-      }
-      leftSibling = leftSibling.previousSibling;
+var FALLBACK_COLOR_IDX = 0;
+var COLOR_ATTRIBUTE = "annotate-color";
+var CLASS_HIGHLIGHT = "__annotate-highlight__";
+var ID_TOOLTIP = "__annotate-tooltip__";
+var CLASS_COLOR_BUTTON = "__annotate-color__";
+var Annotation = /** @class */ (function () {
+    function Annotation(anchor, anchorOffset, highlightedString, comment) {
+        var _this = this;
+        this.generateRandomId = function () {
+            // Adapted from rinogo's answer: https://stackoverflow.com/a/66332305/7427716
+            var id = window.URL.createObjectURL(new Blob([])).substr(-12);
+            return id;
+        };
+        /**
+         * Returns the position of anchor within its parent element.
+         *
+         * This is necessary to disambiguate the match within the anchor from matches
+         * occurring earlier in its parent.
+         *
+         * @param {Node} anchor
+         * @param {number} anchorOffset
+         * @param {RegExp} regex
+         * @returns {number}
+         * @memberof Annotation
+         */
+        this.positionWithinParentElement = function (anchor, anchorOffset, regex) {
+            var gRegex = new RegExp(regex, "g");
+            var offset = _this.preAnchorOffset(anchor) + anchorOffset;
+            var beforeAnchorString = anchor.parentElement.innerHTML.substring(0, offset);
+            var matches = beforeAnchorString.match(gRegex);
+            return matches ? matches.length : 0;
+        };
+        /**
+         * Returns a regex corresponding to the input string that can be matched against
+         * innerHTML of a DOM element.
+         *
+         * Using regex is necessary because innerHTML may contain line breaks and other
+         * spaces that the Selection does not capture.
+         *
+         * @param {string} string
+         * @returns {RegExp}
+         * @memberof Annotation
+         */
+        this.innerHtmlReadyRegex = function (string) {
+            // This pattern will ignore space, line feed and other Unicode spaces between the words
+            var pattern = string.replace(/\s+/g, "(\\s+)");
+            var regex = new RegExp(pattern);
+            return regex;
+        };
+        /**
+         * Computes the offset of the anchor node within its parent element
+         * by iterating over the contents of all its left siblings.
+         *
+         * @param {Node} anchor
+         *
+         * @returns {number}
+         * @memberof Annotation
+         */
+        this.preAnchorOffset = function (anchor) {
+            var preAnchorOffset = 0;
+            var leftSibling = anchor.previousSibling;
+            while (leftSibling) {
+                if (leftSibling.outerHTML) {
+                    preAnchorOffset += leftSibling.outerHTML.length;
+                }
+                else if (leftSibling.textContent) {
+                    preAnchorOffset += leftSibling.textContent.length;
+                }
+                else {
+                    console.error("Annotate: unsupported node type: ".concat(leftSibling.nodeType), leftSibling);
+                }
+                leftSibling = leftSibling.previousSibling;
+            }
+            return preAnchorOffset;
+        };
+        /**
+         * Determines the path to node from the root element. The path is a
+         * sequence of steps, where each step is represented by tag name
+         * (this is the tag of the element which we should follow at the given
+         * step) and a number (this is to determine which child with that tag
+         * we should follow)
+         *
+         * @param  {Node} node
+         * @returns {[[string, number]]}
+         */
+        this.pathTo = function (node) {
+            var path = [];
+            var currentEl = node;
+            while (currentEl.parentElement) {
+                var siblings = currentEl.parentElement.children;
+                var childIdx = 0;
+                for (var i = void 0; i < siblings.length; i++) {
+                    var sibling = siblings[i];
+                    if (sibling.tagName === currentEl.tagName) {
+                        if (sibling === currentEl) {
+                            break;
+                        }
+                        childIdx++;
+                    }
+                }
+                var pathStep = [currentEl.tagName.toLowerCase(), childIdx];
+                path.push(pathStep);
+                currentEl = currentEl.parentElement;
+            }
+            path.reverse();
+            return path;
+        };
+        this.path = this.pathTo(anchor.parentElement);
+        this.comment = comment;
+        this.regex = this.innerHtmlReadyRegex(highlightedString);
+        this.pos = this.positionWithinParentElement(anchor, anchorOffset, this.regex);
+        this.highlightColor = null;
+        this.id = this.generateRandomId();
     }
-    return preAnchorOffset;
-  };
-  /**
-   * Determines the path to node from the root element. The path is a
-   * sequence of steps, where each step is represented by tag name
-   * (this is the tag of the element which we should follow at the given
-   * step) and a number (this is to determine which child with that tag
-   * we should follow)
-   *
-   * @param  {Node} node
-   * @returns {[[string, number]]}
-   */
-  pathTo = (node) => {
-    const path = [];
-    let currentEl = node;
-    while (currentEl.parentElement) {
-      const siblings = currentEl.parentElement.children;
-      let childIdx = 0;
-      for (const sibling of siblings) {
-        if (sibling.tagName === currentEl.tagName) {
-          if (sibling === currentEl) {
-            break;
-          }
-          childIdx++;
+    /**
+     * Returns true if the input node can be highlighted, false otherwise.
+     * A node can be highlighted iff neither it nor its parent are already
+     * highlighted.
+     *
+     * @static
+     * @param {Node} anchorNode
+     * @returns {boolean}
+     * @memberof Annotation
+     */
+    Annotation.canHighlight = function (anchorNode) {
+        var highlighted = function (el) { return el.classList.contains(CLASS_HIGHLIGHT); };
+        if (anchorNode.nodeType === Node.ELEMENT_NODE) {
+            return !highlighted(anchorNode);
         }
-      }
-      const pathStep = [currentEl.tagName.toLowerCase(), childIdx];
-      path.push(pathStep);
-      currentEl = currentEl.parentElement;
-    }
-    path.reverse();
-    return path;
-  };
-
-  /**
-   * Returns true if the input node can be highlighted, false otherwise.
-   * A node can be highlighted iff neither it nor its parent are already
-   * highlighted.
-   *
-   * @static
-   * @param {Node} anchorNode
-   * @returns {boolean}
-   * @memberof Annotation
-   */
-  static canHighlight = (anchorNode) => {
-    const highlighted = (el) => el.classList.contains(CLASS_HIGHLIGHT);
-    if (anchorNode.nodeType === Node.ELEMENT_NODE) {
-      return !highlighted(anchorNode);
-    } else if (anchorNode.parentElement) {
-      return !highlighted(anchorNode.parentElement);
-    } else {
-      return true;
-    }
-  };
-}
-
-class AnnotationManager {
-  constructor(colors) {
-    this.colors = colors;
-    this.annotations = {};
-    this.tooltipManager = new TooltipManager(colors);
-  }
-
-  addAnnotation = (annotation, color) => {
-    const { path, id } = annotation;
-
-    annotation.highlightColor = color;
-    this.annotations[id] = annotation;
-
-    // TODO: may be useful during reconstruction
-    // const element = this.elementWithHighlight(path);
-    // const [start, end] = this.whereToInsert(element, annotation);
-    this.insertAnnotationIntoDOM(annotation);
-  };
-
-  /**
-   * Returns the start and end position of where to insert the annotation in
-   * element.
-   *
-   * @param {Node} element
-   * @param {Annotation} annotation
-   * @returns {[number, number]}
-   * @memberof AnnotationManager
-   */
-  whereToInsert = (element, annotation) => {
-    const { regex, pos } = annotation;
-
-    // Cannot use a global regex here as those do not return index in their matches
-    let matchPos = -1;
-    let start = 0;
-    let end = 0;
-    while (matchPos !== pos) {
-      const match = element.innerHTML.substring(end).match(regex);
-      start = end + match.index;
-      end += match.index + match[0].length;
-      matchPos++;
-    }
-
-    return [start, end];
-  };
-
-  /**
-   * Determines which element contains the highlight.
-   *
-   * @param  {[[string, number]]} path
-   */
-  elementWithHighlight = (path) => {
-    let node = document;
-    for (const [tag, childIdx] of path) {
-      node = node.getElementsByTagName(tag)[childIdx];
-    }
-    return node;
-  };
-
-  startSelectionInteraction = () => {
-    const selection = window.getSelection();
-    const { anchorOffset, focusOffset } = selection;
-
-    // Make sure selection goes from left to right
-    const leftToRight = anchorOffset < focusOffset;
-    const anchor = leftToRight ? selection.anchorNode : selection.focusNode;
-    const offset = leftToRight ? anchorOffset : focusOffset;
-
-    const annotation = new Annotation(anchor, offset, selection.toString());
-
-    const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
-    const scrollTop = document.scrollingElement.scrollTop;
-    const scrollLeft = document.scrollingElement.scrollLeft;
-    this.tooltipManager.showTooltip(
-      annotation,
-      x + scrollLeft,
-      y + scrollTop,
-      height,
-      this.updateColor,
-      this.addAnnotation
-    );
-  };
-
-  // Functions that manipulate the DOM
-  updateColor = (annotation, newColor) => {
-    const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
-    for (const highlight of highlights) {
-      if (highlight.getAttribute("annotate-id") === annotation.id) {
-        highlight.style.backgroundColor = newColor;
-      }
-    }
-  };
-
-  /**
-   * Inserts the annotation into the DOM.
-   *
-   * @param  {Annotation} annotation
-   */
-  insertAnnotationIntoDOM = (annotation) => {
-    const { id, highlightColor } = annotation;
-
-    // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
-    const span = document.createElement("span");
-    span.className = CLASS_HIGHLIGHT;
-    span.setAttribute("annotate-id", id);
-    span.style.backgroundColor = highlightColor;
-
-    span.onclick = () => {
-      const scrollLeft = document.scrollingElement.scrollLeft;
-      const scrollTop = document.scrollingElement.scrollTop;
-      const x = scrollLeft + span.getBoundingClientRect().x;
-      const y = scrollTop + span.getBoundingClientRect().y;
-      const lineHeight = span.offsetHeight;
-
-      this.tooltipManager.showTooltip(
-        annotation,
-        x,
-        y,
-        lineHeight,
-        this.updateColor,
-        this.addAnnotation
-      );
+        else if (anchorNode.parentElement) {
+            return !highlighted(anchorNode.parentElement);
+        }
+        else {
+            return true;
+        }
     };
-
-    const selection = window.getSelection();
-    if (selection.rangeCount) {
-      const range = selection.getRangeAt(0).cloneRange();
-      range.surroundContents(span);
-      selection.removeAllRanges();
-      selection.addRange(range);
+    return Annotation;
+}());
+var AnnotationManager = /** @class */ (function () {
+    function AnnotationManager(colors) {
+        var _this = this;
+        this.addAnnotation = function (annotation, color) {
+            var path = annotation.path, id = annotation.id;
+            annotation.highlightColor = color;
+            _this.annotations[id] = annotation;
+            // TODO: may be useful during reconstruction
+            // const element = this.elementWithHighlight(path);
+            // const [start, end] = this.whereToInsert(element, annotation);
+            _this.insertAnnotationIntoDOM(annotation);
+        };
+        /**
+         * Returns the start and end position of where to insert the annotation in
+         * element.
+         *
+         * @param {Node} element
+         * @param {Annotation} annotation
+         * @returns {[number, number]}
+         * @memberof AnnotationManager
+         */
+        this.whereToInsert = function (element, annotation) {
+            var regex = annotation.regex, pos = annotation.pos;
+            // Cannot use a global regex here as those do not return index in their matches
+            var matchPos = -1;
+            var start = 0;
+            var end = 0;
+            while (matchPos !== pos) {
+                var match = element.innerHTML.substring(end).match(regex);
+                start = end + match.index;
+                end += match.index + match[0].length;
+                matchPos++;
+            }
+            return [start, end];
+        };
+        /**
+         * Determines which element contains the highlight.
+         *
+         * @param  {[[string, number]]} path
+         */
+        this.elementWithHighlight = function (path) {
+            var node = document;
+            for (var _i = 0, path_1 = path; _i < path_1.length; _i++) {
+                var _a = path_1[_i], tag = _a[0], childIdx = _a[1];
+                node = node.getElementsByTagName(tag)[childIdx];
+            }
+            return node;
+        };
+        this.startSelectionInteraction = function () {
+            var selection = window.getSelection();
+            var anchorOffset = selection.anchorOffset, focusOffset = selection.focusOffset;
+            // Make sure selection goes from left to right
+            var leftToRight = anchorOffset < focusOffset;
+            var anchor = leftToRight ? selection.anchorNode : selection.focusNode;
+            var offset = leftToRight ? anchorOffset : focusOffset;
+            var annotation = new Annotation(anchor, offset, selection.toString());
+            var _a = selection.getRangeAt(0).getBoundingClientRect(), x = _a.x, y = _a.y, height = _a.height;
+            var scrollTop = document.scrollingElement.scrollTop;
+            var scrollLeft = document.scrollingElement.scrollLeft;
+            _this.tooltipManager.showTooltip(annotation, x + scrollLeft, y + scrollTop, height, _this.updateColor, _this.addAnnotation);
+        };
+        // Functions that manipulate the DOM
+        this.updateColor = function (annotation, newColor) {
+            var highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
+            for (var i = 0; i < highlights.length; i++) {
+                var highlight = highlights[i];
+                if (highlight.getAttribute("annotate-id") === annotation.id) {
+                    highlight.style.backgroundColor = newColor;
+                }
+            }
+        };
+        /**
+         * Inserts the annotation into the DOM.
+         *
+         * @param  {Annotation} annotation
+         */
+        this.insertAnnotationIntoDOM = function (annotation) {
+            var id = annotation.id, highlightColor = annotation.highlightColor;
+            // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
+            var span = document.createElement("span");
+            span.className = CLASS_HIGHLIGHT;
+            span.setAttribute("annotate-id", id);
+            span.style.backgroundColor = highlightColor;
+            span.onclick = function () {
+                var scrollLeft = document.scrollingElement.scrollLeft;
+                var scrollTop = document.scrollingElement.scrollTop;
+                var x = scrollLeft + span.getBoundingClientRect().x;
+                var y = scrollTop + span.getBoundingClientRect().y;
+                var lineHeight = span.offsetHeight;
+                _this.tooltipManager.showTooltip(annotation, x, y, lineHeight, _this.updateColor, _this.addAnnotation);
+            };
+            var selection = window.getSelection();
+            if (selection.rangeCount) {
+                var range = selection.getRangeAt(0).cloneRange();
+                range.surroundContents(span);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        };
+        this.colors = colors;
+        this.annotations = {};
+        this.tooltipManager = new TooltipManager(colors);
     }
-  };
-}
-
-class TooltipManager {
-  constructor(colors) {
-    this.colors = colors;
-    this.tooltip = document.getElementById(ID_TOOLTIP);
-    this.addColorButtons();
-  }
-
-  // DOM manipulation:
-  addColorButtons = () => {
-    for (let i = 0; i < this.colors.length; i++) {
-      const color = this.colors[i];
-      const colorButton = document.createElement("button");
-      colorButton.setAttribute("class", CLASS_COLOR_BUTTON);
-      colorButton.setAttribute(COLOR_ATTRIBUTE, i);
-      colorButton.style.backgroundColor = color;
-      this.tooltip.appendChild(colorButton);
+    return AnnotationManager;
+}());
+var TooltipManager = /** @class */ (function () {
+    function TooltipManager(colors) {
+        var _this = this;
+        // DOM manipulation:
+        this.addColorButtons = function () {
+            for (var i = 0; i < _this.colors.length; i++) {
+                var color = _this.colors[i];
+                var colorButton = document.createElement("button");
+                colorButton.setAttribute("class", CLASS_COLOR_BUTTON);
+                colorButton.setAttribute(COLOR_ATTRIBUTE, '' + i);
+                colorButton.style.backgroundColor = color;
+                _this.tooltip.appendChild(colorButton);
+            }
+        };
+        this.showTooltip = function (annotation, x, y, lineHeight, updateColor, addAnnotation) {
+            // Prevent vertical overflow
+            var offsetTop;
+            var tooltipHeight = _this.tooltip.offsetHeight;
+            var scrollTop = document.scrollingElement.scrollTop;
+            var isAboveViewport = y - scrollTop - tooltipHeight < 0;
+            if (isAboveViewport) {
+                offsetTop = y + lineHeight;
+            }
+            else {
+                offsetTop = y - tooltipHeight;
+            }
+            // Prevent horizontal overflow
+            var offsetLeft;
+            var viewportWidth = window.visualViewport.width;
+            var tooltipWidth = _this.tooltip.offsetWidth;
+            var scrollLeft = document.scrollingElement.scrollLeft;
+            var isBeyondViewport = x - scrollLeft + tooltipWidth > viewportWidth;
+            if (isBeyondViewport) {
+                offsetLeft = scrollLeft + viewportWidth - tooltipWidth;
+            }
+            else {
+                offsetLeft = x;
+            }
+            _this.tooltip.style.transform = "translate(".concat(offsetLeft, "px, ").concat(offsetTop, "px");
+            _this.tooltip.style.visibility = "visible";
+            // Bind actions to tooltip color buttons
+            var colorButtons = _this.tooltip.getElementsByClassName(CLASS_COLOR_BUTTON);
+            var _loop_1 = function (i) {
+                var button = colorButtons[i];
+                button.onclick = function () {
+                    var idx = parseInt(button.getAttribute(COLOR_ATTRIBUTE));
+                    var newColor = _this.colors[idx] || _this.colors[FALLBACK_COLOR_IDX] || "yellow";
+                    if (annotation.highlightColor &&
+                        annotation.highlightColor !== newColor) {
+                        annotation.highlightColor = newColor;
+                        updateColor(annotation, newColor);
+                    }
+                    else {
+                        addAnnotation(annotation, newColor);
+                        var selection = window.getSelection();
+                        selection.removeAllRanges();
+                    }
+                };
+            };
+            for (var i = 0; i < colorButtons.length; i++) {
+                _loop_1(i);
+            }
+        };
+        this.colors = colors;
+        this.tooltip = document.getElementById(ID_TOOLTIP);
+        this.addColorButtons();
     }
-  };
-
-  showTooltip = (annotation, x, y, lineHeight, updateColor, addAnnotation) => {
-    // Prevent vertical overflow
-    let offsetTop;
-    const tooltipHeight = this.tooltip.offsetHeight;
-    const scrollTop = document.scrollingElement.scrollTop;
-    const isAboveViewport = y - scrollTop - tooltipHeight < 0;
-    if (isAboveViewport) {
-      offsetTop = y + lineHeight;
-    } else {
-      offsetTop = y - tooltipHeight;
+    return TooltipManager;
+}());
+var Annotate = /** @class */ (function () {
+    // TODO: merge Annotate and AnnotateManager?
+    function Annotate(colors) {
+        var _this = this;
+        this.handleSelection = function (event) {
+            var selection = window.getSelection();
+            var anchorNode = selection.anchorNode, focusNode = selection.focusNode;
+            var shouldStartSelectionInteraction = selection.toString().length &&
+                anchorNode.isSameNode(focusNode) &&
+                Annotation.canHighlight(anchorNode);
+            if (shouldStartSelectionInteraction) {
+                _this.annotationManager.startSelectionInteraction();
+            }
+            else if (!event.target.classList.contains(CLASS_COLOR_BUTTON)) {
+                document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager
+            }
+        };
+        this.annotationManager = new AnnotationManager(colors);
+        document.addEventListener("mouseup", this.handleSelection);
     }
-
-    // Prevent horizontal overflow
-    let offsetLeft;
-    const viewportWidth = window.visualViewport.width;
-    const tooltipWidth = this.tooltip.offsetWidth;
-    const scrollLeft = document.scrollingElement.scrollLeft;
-    const isBeyondViewport = x - scrollLeft + tooltipWidth > viewportWidth;
-    if (isBeyondViewport) {
-      offsetLeft = scrollLeft + viewportWidth - tooltipWidth;
-    } else {
-      offsetLeft = x;
-    }
-
-    this.tooltip.style.transform = `translate(${offsetLeft}px, ${offsetTop}px`;
-    this.tooltip.style.visibility = "visible";
-
-    // Bind actions to tooltip color buttons
-    const colorButtons =
-      this.tooltip.getElementsByClassName(CLASS_COLOR_BUTTON);
-    for (const button of colorButtons) {
-      button.onclick = () => {
-        const idx = parseInt(button.getAttribute(COLOR_ATTRIBUTE));
-        const newColor =
-          this.colors[idx] || this.colors[FALLBACK_COLOR_IDX] || "yellow";
-        if (
-          annotation.highlightColor &&
-          annotation.highlightColor !== newColor
-        ) {
-          annotation.highlightColor = newColor;
-          updateColor(annotation, newColor);
-        } else {
-          addAnnotation(annotation, newColor);
-          const selection = window.getSelection();
-          selection.removeAllRanges();
-        }
-      };
-    }
-  };
-}
-
-class Annotate {
-  // TODO: merge Annotate and AnnotateManager?
-  constructor(colors) {
-    this.annotationManager = new AnnotationManager(colors);
-    document.addEventListener("mouseup", this.handleSelection);
-  }
-
-  handleSelection = (event) => {
-    const selection = window.getSelection();
-    const { anchorNode, focusNode } = selection;
-
-    const shouldStartSelectionInteraction =
-      selection.toString().length &&
-      anchorNode.isSameNode(focusNode) &&
-      Annotation.canHighlight(anchorNode);
-
-    if (shouldStartSelectionInteraction) {
-      this.annotationManager.startSelectionInteraction();
-    } else if (!event.target.classList.contains(CLASS_COLOR_BUTTON)) {
-      document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager
-    }
-  };
-}
-
+    return Annotate;
+}());
+module.exports = {};
 // TODO:
 // - local storage
 //    -> add range when reconstructing selections or do node splitting and insertion using insertBefore (https://developer.mozilla.org/en-US/docs/Web/API/Node/insertBefore)
@@ -390,6 +349,8 @@ class Annotate {
 //    -> freeze selection, make it stay as long as tooltip is open?
 //    -> animations
 //    -> make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
+// - both students recommended:
+//   -> allow the end users to select their own highlight color using a color picker
 // - selection across nodes
 //    -> would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
 //    -> another problem: span layering -> how to handle what was clicked? What if a highlight is immersed in a large highlight? we'd need to make sure its event listener gets fired
