@@ -18,6 +18,7 @@ class Annotation {
   path: Path;
   comment: string;
   regex: RegExp;
+  encodedRegex: string;
   pos: number;
   highlightColor: Color;
   anchorOffset: number;
@@ -29,6 +30,7 @@ class Annotation {
     this.path = this.pathTo(anchor.parentElement);
     this.comment = comment;
     this.regex = this.innerHtmlReadyRegex(highlightedString);
+    this.encodedRegex = encodeURIComponent(this.regex.source);
     this.pos = this.positionWithinParentElement(
       anchor,
       anchorOffset,
@@ -147,6 +149,13 @@ class Annotation {
     return path;
   };
 
+  static fromJSON = (json: string): Annotation => {
+    const annotation = JSON.parse(json);
+    annotation.regex = new RegExp(decodeURIComponent(annotation.encodedRegex))
+
+    return annotation as Annotation;
+  }
+
   /**
    * Returns true if the input node can be highlighted, false otherwise.
    * A node can be highlighted iff neither it nor its parent are already
@@ -178,6 +187,28 @@ class AnnotationManager {
     this.colors = colors;
     this.annotations = {};
     this.tooltipManager = new TooltipManager(colors);
+    this.insertAnnotations()
+  }
+
+  insertAnnotations = (): void => {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      try {
+        const id = window.localStorage.key(i)
+        const annotation = Annotation.fromJSON(window.localStorage.getItem(id))
+        console.log(annotation)
+        console.log(annotation.regex)
+        // this.insertAnnotationFromLocalStorageIntoDOM()
+      } catch (e) {
+        console.error('Could not parse annotation')
+        console.error(e)
+      }
+    }
+
+  }
+
+
+  insertAnnotationFromLocalStorageIntoDOM = () => {
+
   }
 
   addAnnotation = (annotation: Annotation, color: Color): void => {
@@ -189,7 +220,7 @@ class AnnotationManager {
     // TODO: may be useful during reconstruction
     // const element = this.elementWithHighlight(path);
     // const [start, end] = this.whereToInsert(element, annotation);
-    this.insertAnnotationIntoDOM(annotation);
+    this.insertAnnotationFromSelectionIntoDOM(annotation);
   };
 
   /**
@@ -241,7 +272,10 @@ class AnnotationManager {
     const offset = leftToRight ? anchorOffset : focusOffset;
 
     const annotation = new Annotation(anchor, offset, selection.toString());
-    console.log(annotation)
+    // TODO: only do this once a color button is clicked
+    console.log(annotation.id)
+    window.localStorage.setItem(annotation.id, JSON.stringify(annotation))
+
 
     const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
     const scrollTop = document.scrollingElement.scrollTop;
@@ -272,7 +306,7 @@ class AnnotationManager {
    *
    * @param  {Annotation} annotation
    */
-  insertAnnotationIntoDOM = (annotation) => {
+  insertAnnotationFromSelectionIntoDOM = (annotation: Annotation) => { // TODO: rename
     const { id, highlightColor } = annotation;
 
     // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
@@ -382,15 +416,16 @@ class TooltipManager {
   };
 }
 
+
+// window.localStorage.clear() // TODO: remove
+
 class Annotate {
   annotationManager: AnnotationManager;
 
   constructor(colors: Color[]) {
-    // TODO: merge Annotate and AnnotateManager?
+    // TODO: merge Annotate and AnnotateManager? export AnnotationManager as
     this.annotationManager = new AnnotationManager(colors);
     document.addEventListener("mouseup", this.handleSelection);
-
-
   }
 
   handleSelection = (event: MouseEvent): void => {
@@ -435,3 +470,4 @@ class Annotate {
 // - selection across nodes
 //    -> would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
 //    -> another problem: span layering -> how to handle what was clicked? What if a highlight is immersed in a large highlight? we'd need to make sure its event listener gets fired
+// - store annotation IDs in a separate entry in local storage
