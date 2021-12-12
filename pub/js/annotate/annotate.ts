@@ -1,5 +1,3 @@
-export = {};
-
 // Global constants
 const FALLBACK_COLOR_IDX = 0;
 const FALLBACK_COLOR: Color = "yellow";
@@ -314,7 +312,7 @@ class AnnotationManager {
   };
 
   // Functions that manipulate the DOM
-  updateColor = (annotation, newColor) => {
+  updateColor = (annotation: Annotation, newColor: Color) => {
     const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
     for (let i = 0; i < highlights.length; i++) {
       const highlight = highlights[i] as HTMLElement;
