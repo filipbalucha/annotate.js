@@ -201,7 +201,6 @@ class AnnotationManager {
       try {
         const id = window.localStorage.key(i);
         const annotation = Annotation.fromJSON(window.localStorage.getItem(id));
-        console.log(annotation);
 
         const range = this.annotationRange(annotation);
         this.insertAnnotationIntoDOM(annotation, range);
@@ -242,7 +241,9 @@ class AnnotationManager {
 
     const selection = window.getSelection();
     const range = selection.getRangeAt(0).cloneRange();
+
     this.insertAnnotationIntoDOM(annotation, range);
+    window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
 
     selection.removeAllRanges();
     selection.addRange(range);
@@ -294,9 +295,6 @@ class AnnotationManager {
     const offset = leftToRight ? anchorOffset : focusOffset;
 
     const annotation = new Annotation(anchor, offset, selection.toString());
-    // TODO: only do this once a color button is clicked
-    console.log(annotation.id);
-    window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
 
     const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
     const scrollTop = document.scrollingElement.scrollTop;
@@ -423,6 +421,7 @@ class TooltipManager {
         ) {
           annotation.highlightColor = newColor;
           updateColor(annotation, newColor);
+          // TODO: implement update of local storage object
         } else {
           addAnnotation(annotation, newColor);
           const selection = window.getSelection();
@@ -469,7 +468,9 @@ class Annotate {
 // -> tooltip not closing after:
 //    1. clicking elsewhere
 //    2. removing range
-// -> changing color for re-inserted not working
+
+// - cleanup
+// -> stop working with regex and use text instead? implement in parallel before removing regex!
 
 // - tooltip comments
 // - tooltip delete button

@@ -152,7 +152,6 @@ var AnnotationManager = /** @class */ (function () {
                 try {
                     var id = window.localStorage.key(i);
                     var annotation = Annotation.fromJSON(window.localStorage.getItem(id));
-                    console.log(annotation);
                     var range = _this.annotationRange(annotation);
                     _this.insertAnnotationIntoDOM(annotation, range);
                 }
@@ -186,6 +185,7 @@ var AnnotationManager = /** @class */ (function () {
             var selection = window.getSelection();
             var range = selection.getRangeAt(0).cloneRange();
             _this.insertAnnotationIntoDOM(annotation, range);
+            window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
             selection.removeAllRanges();
             selection.addRange(range);
         };
@@ -227,9 +227,6 @@ var AnnotationManager = /** @class */ (function () {
             var anchor = leftToRight ? selection.anchorNode : selection.focusNode;
             var offset = leftToRight ? anchorOffset : focusOffset;
             var annotation = new Annotation(anchor, offset, selection.toString());
-            // TODO: only do this once a color button is clicked
-            console.log(annotation.id);
-            window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
             var _a = selection.getRangeAt(0).getBoundingClientRect(), x = _a.x, y = _a.y, height = _a.height;
             var scrollTop = document.scrollingElement.scrollTop;
             var scrollLeft = document.scrollingElement.scrollLeft;
@@ -320,6 +317,7 @@ var TooltipManager = /** @class */ (function () {
                         annotation.highlightColor !== newColor) {
                         annotation.highlightColor = newColor;
                         updateColor(annotation, newColor);
+                        // TODO: implement update of local storage object
                     }
                     else {
                         addAnnotation(annotation, newColor);
@@ -368,7 +366,8 @@ var Annotate = /** @class */ (function () {
 // -> tooltip not closing after:
 //    1. clicking elsewhere
 //    2. removing range
-// -> changing color for re-inserted not working
+// - cleanup
+// -> stop working with regex and use text instead? implement in parallel before removing regex!
 // - tooltip comments
 // - tooltip delete button
 //    -> 1. hoist children: https://stackoverflow.com/questions/1614658/how-do-you-undo-surroundcontents-in-javascript
