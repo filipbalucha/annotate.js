@@ -193,11 +193,19 @@ var AnnotationManager = /** @class */ (function () {
             var regex = annotation.regex, pos = annotation.pos;
             var curr = element.firstChild;
             while (curr) {
-                var match = curr.textContent.match(regex);
-                if (match) {
-                    var start = match.index;
-                    var end = match.index + match[0].length;
-                    return [curr, start, end];
+                var start = 0;
+                var end = 0;
+                var matchPos = -1;
+                var match = void 0;
+                // Recursively search current node for matches
+                while ((match = curr.textContent.substring(end).match(regex))) {
+                    // Note: Cannot use a global regex here as those do not return index in their matches
+                    matchPos++;
+                    start = end + match.index;
+                    end += match.index + match[0].length;
+                    if (matchPos === pos) {
+                        return [curr, start, end];
+                    }
                 }
                 curr = curr.nextSibling;
             }

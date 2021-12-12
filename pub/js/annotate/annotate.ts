@@ -252,16 +252,25 @@ class AnnotationManager {
   whereToInsert = (
     element: Element,
     annotation: Annotation
-  ): [Text, number, number] => {
+  ): [Text, number, number] | null => {
     const { regex, pos } = annotation;
 
     let curr: Node = element.firstChild;
     while (curr) {
-      const match = curr.textContent.match(regex);
-      if (match) {
-        const start = match.index;
-        const end = match.index + match[0].length;
-        return [curr as Text, start, end];
+      let start = 0;
+      let end = 0;
+      let matchPos = -1;
+      let match: RegExpMatchArray | null;
+      // Recursively search current node for matches
+      while ((match = curr.textContent.substring(end).match(regex))) {
+        // Note: Cannot use a global regex here as those do not return index in their matches
+        matchPos++;
+        start = end + match.index;
+        end += match.index + match[0].length;
+
+        if (matchPos === pos) {
+          return [curr as Text, start, end];
+        }
       }
       curr = curr.nextSibling;
     }
