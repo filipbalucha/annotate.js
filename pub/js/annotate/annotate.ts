@@ -1,8 +1,8 @@
-export = {}
+export = {};
 
 // Global constants
 const FALLBACK_COLOR_IDX = 0;
-const FALLBACK_COLOR: Color = "yellow"
+const FALLBACK_COLOR: Color = "yellow";
 const COLOR_ATTRIBUTE = "annotate-color";
 const CLASS_HIGHLIGHT = "__annotate-highlight__";
 const ID_TOOLTIP = "__annotate-tooltip__";
@@ -10,7 +10,7 @@ const CLASS_COLOR_BUTTON = "__annotate-color__";
 
 // Data
 
-type Tag = string
+type Tag = string;
 type ChildIndex = number;
 type Path = [Tag, ChildIndex][];
 type Color = string;
@@ -25,8 +25,12 @@ class Annotation {
   anchorOffset: number;
   id: string;
 
-
-  constructor(anchor, anchorOffset: number, highlightedString: string, comment?: Annotation['comment']) {
+  constructor(
+    anchor,
+    anchorOffset: number,
+    highlightedString: string,
+    comment?: Annotation["comment"]
+  ) {
     this.path = this.pathTo(anchor.parentElement);
     this.comment = comment;
     this.regex = this.innerHtmlReadyRegex(highlightedString);
@@ -40,7 +44,7 @@ class Annotation {
     this.id = this.generateRandomId();
   }
 
-  generateRandomId = (): Annotation['id'] => {
+  generateRandomId = (): Annotation["id"] => {
     // Adapted from rinogo's answer: https://stackoverflow.com/a/66332305/7427716
     const id = window.URL.createObjectURL(new Blob([])).substr(-12);
     return id;
@@ -58,7 +62,11 @@ class Annotation {
    * @returns {number}
    * @memberof Annotation
    */
-  positionWithinParentElement = (anchor: Node, anchorOffset: number, regex: RegExp): number => {
+  positionWithinParentElement = (
+    anchor: Node,
+    anchorOffset: number,
+    regex: RegExp
+  ): number => {
     const gRegex = new RegExp(regex, "g");
     const offset = this.preAnchorOffset(anchor) + anchorOffset;
     const beforeAnchorString = anchor.parentElement.innerHTML.substring(
@@ -133,7 +141,7 @@ class Annotation {
       const siblings = currentEl.parentElement.children;
       let childIdx = 0;
       for (let i = 0; i < siblings.length; i++) {
-        const sibling = siblings[i]
+        const sibling = siblings[i];
         if (sibling.tagName === currentEl.tagName) {
           if (sibling === currentEl) {
             break;
@@ -151,10 +159,10 @@ class Annotation {
 
   static fromJSON = (json: string): Annotation => {
     const annotation = JSON.parse(json);
-    annotation.regex = new RegExp(decodeURIComponent(annotation.encodedRegex))
+    annotation.regex = new RegExp(decodeURIComponent(annotation.encodedRegex));
 
     return annotation as Annotation;
-  }
+  };
 
   /**
    * Returns true if the input node can be highlighted, false otherwise.
@@ -180,50 +188,51 @@ class Annotation {
 
 class AnnotationManager {
   colors: Color[];
-  annotations: { [key: string]: Annotation }
-  tooltipManager: TooltipManager
+  annotations: { [key: string]: Annotation };
+  tooltipManager: TooltipManager;
 
   constructor(colors) {
     this.colors = colors;
     this.annotations = {};
     this.tooltipManager = new TooltipManager(colors);
-    this.loadAnnotationsFromLocalStorage()
+    this.loadAnnotationsFromLocalStorage();
   }
 
   loadAnnotationsFromLocalStorage = (): void => {
     for (let i = 0; i < window.localStorage.length; i++) {
       try {
-        const id = window.localStorage.key(i)
-        const annotation = Annotation.fromJSON(window.localStorage.getItem(id))
+        const id = window.localStorage.key(i);
+        const annotation = Annotation.fromJSON(window.localStorage.getItem(id));
 
-        const range = this.annotationRange(annotation)
-        this.insertAnnotationIntoDOM(annotation, range)
+        const range = this.annotationRange(annotation);
+        this.insertAnnotationIntoDOM(annotation, range);
       } catch (e) {
-        console.error('Could not parse annotation')
-        console.error(e)
+        console.error("Could not parse annotation");
+        console.error(e);
       }
     }
-
-  }
+  };
 
   annotationRange = (annotation: Annotation): Range => {
     // Determine where to insert annotation
     const { path } = annotation;
     const element = this.elementWithHighlight(path) as Element;
     if (!element) {
-      console.error('Could not find Annotation on the webpage. Annotate.js does not work on webpages whose content changes dynamically.')
-      throw new Error("Could not find annotation's element")
+      console.error(
+        "Could not find Annotation on the webpage. Annotate.js does not work on webpages whose content changes dynamically."
+      );
+      throw new Error("Could not find annotation's element");
     }
 
     // Manually create a range
     const [start, end] = this.whereToInsert(element, annotation);
     (element.firstChild as Text).splitText(end);
-    const center = (element.firstChild as Text).splitText(start)
+    const center = (element.firstChild as Text).splitText(start);
     const range = document.createRange();
     range.selectNode(center);
 
-    return range
-  }
+    return range;
+  };
 
   addAnnotation = (annotation: Annotation, color: Color): void => {
     const { id } = annotation;
@@ -232,7 +241,7 @@ class AnnotationManager {
     this.annotations[id] = annotation;
     this.elementWithHighlight(annotation.path);
 
-    const selection = window.getSelection()
+    const selection = window.getSelection();
     const range = selection.getRangeAt(0).cloneRange();
     this.insertAnnotationIntoDOM(annotation, range);
 
@@ -293,9 +302,8 @@ class AnnotationManager {
 
     const annotation = new Annotation(anchor, offset, selection.toString());
     // TODO: only do this once a color button is clicked
-    console.log(annotation.id)
-    window.localStorage.setItem(annotation.id, JSON.stringify(annotation))
-
+    console.log(annotation.id);
+    window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
 
     const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
     const scrollTop = document.scrollingElement.scrollTop;
@@ -314,7 +322,7 @@ class AnnotationManager {
   updateColor = (annotation, newColor) => {
     const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
     for (let i = 0; i < highlights.length; i++) {
-      const highlight = highlights[i] as HTMLElement
+      const highlight = highlights[i] as HTMLElement;
       if (highlight.getAttribute("annotate-id") === annotation.id) {
         highlight.style.backgroundColor = newColor;
       }
@@ -367,13 +375,20 @@ class TooltipManager {
       const color = this.colors[i];
       const colorButton = document.createElement("button");
       colorButton.setAttribute("class", CLASS_COLOR_BUTTON);
-      colorButton.setAttribute(COLOR_ATTRIBUTE, '' + i);
+      colorButton.setAttribute(COLOR_ATTRIBUTE, "" + i);
       colorButton.style.backgroundColor = color;
       this.tooltip.appendChild(colorButton);
     }
   };
 
-  showTooltip = (annotation: Annotation, x: number, y: number, lineHeight: number, updateColor: (Annotation, Color) => void, addAnnotation: (Annotation, Color) => void) => {
+  showTooltip = (
+    annotation: Annotation,
+    x: number,
+    y: number,
+    lineHeight: number,
+    updateColor: (Annotation, Color) => void,
+    addAnnotation: (Annotation, Color) => void
+  ) => {
     // Prevent vertical overflow
     let offsetTop;
     const tooltipHeight = this.tooltip.offsetHeight;
@@ -404,7 +419,7 @@ class TooltipManager {
     const colorButtons =
       this.tooltip.getElementsByClassName(CLASS_COLOR_BUTTON);
     for (let i = 0; i < colorButtons.length; i++) {
-      const button = colorButtons[i] as HTMLElement
+      const button = colorButtons[i] as HTMLElement;
       button.onclick = () => {
         const idx = parseInt(button.getAttribute(COLOR_ATTRIBUTE));
         const newColor =
@@ -438,9 +453,9 @@ class Annotate {
     const selection = window.getSelection();
     const { anchorNode, focusNode } = selection;
 
-    const tooltip = document.getElementById(ID_TOOLTIP)
-    const target = event.target as Element
-    const clickedTooltip = tooltip && tooltip.contains(target)
+    const tooltip = document.getElementById(ID_TOOLTIP);
+    const target = event.target as Element;
+    const clickedTooltip = tooltip && tooltip.contains(target);
     if (clickedTooltip) {
       document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager
     }
@@ -456,7 +471,6 @@ class Annotate {
     }
   };
 }
-
 
 // - easy bugs
 // -> clicking elsewhere not working
