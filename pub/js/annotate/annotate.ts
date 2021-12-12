@@ -203,6 +203,7 @@ class AnnotationManager {
       try {
         const id = window.localStorage.key(i);
         const annotation = Annotation.fromJSON(window.localStorage.getItem(id));
+        console.log(annotation);
 
         const range = this.annotationRange(annotation);
         this.insertAnnotationIntoDOM(annotation, range);
@@ -225,9 +226,9 @@ class AnnotationManager {
     }
 
     // Manually create a range
-    const [start, end] = this.whereToInsert(element, annotation);
-    (element.firstChild as Text).splitText(end);
-    const center = (element.firstChild as Text).splitText(start);
+    const [node, start, end] = this.whereToInsert(element, annotation);
+    const _ = (node as Text).splitText(end);
+    const center = (node as Text).splitText(start);
     const range = document.createRange();
     range.selectNode(center);
 
@@ -249,30 +250,24 @@ class AnnotationManager {
     selection.addRange(range);
   };
 
-  /**
-   * Returns the start and end position of where to insert the annotation in
-   * element.
-   *
-   * @param {Node} element
-   * @param {Annotation} annotation
-   * @returns {[number, number]}
-   * @memberof AnnotationManager
-   */
-  whereToInsert = (element, annotation) => {
+  whereToInsert = (
+    element: Element,
+    annotation: Annotation
+  ): [Text, number, number] => {
     const { regex, pos } = annotation;
 
-    // Cannot use a global regex here as those do not return index in their matches
-    let matchPos = -1;
-    let start = 0;
-    let end = 0;
-    while (matchPos !== pos) {
-      const match = element.innerHTML.substring(end).match(regex);
-      start = end + match.index;
-      end += match.index + match[0].length;
-      matchPos++;
+    let curr: Node = element.firstChild;
+    while (curr) {
+      const match = curr.textContent.match(regex);
+      if (match) {
+        const start = match.index;
+        const end = match.index + match[0].length;
+        return [curr as Text, start, end];
+      }
+      curr = curr.nextSibling;
     }
 
-    return [start, end];
+    return null;
   };
 
   /**
@@ -472,23 +467,17 @@ class Annotate {
   };
 }
 
-// - easy bugs
-// -> clicking elsewhere not working
-// -> selecting other text not working
-
-// - important bugs
+// - bugs
+// -> tooltip not closing after:
+//    1. clicking elsewhere
+//    2. removing range
 // -> changing color for re-inserted not working
 
-// - local storage
-//    -> add range when reconstructing selections or do node splitting and insertion using insertBefore (https://developer.mozilla.org/en-US/docs/Web/API/Node/insertBefore)
 // - tooltip comments
 // - tooltip delete button
 //    -> 1. hoist children: https://stackoverflow.com/questions/1614658/how-do-you-undo-surroundcontents-in-javascript
 //    -> 2. normalize text nodes: https://developer.mozilla.org/en-US/docs/Web/API/Node/normalize
 //    (maybe also consult https://stackoverflow.com/a/57722235)
-// - optimize for multiple sub-pages
-//    -> each annotation storage will be bound to a URL (with filtered out query strings, etc.)
-//    -> useful: https://developer.mozilla.org/en-US/docs/Web/API/URL
 // - test it in an isolated scrollable
 // - improve UX:
 //    -> freeze selection, make it stay as long as tooltip is open?
@@ -499,4 +488,4 @@ class Annotate {
 // - selection across nodes
 //    -> would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
 //    -> another problem: span layering -> how to handle what was clicked? What if a highlight is immersed in a large highlight? we'd need to make sure its event listener gets fired
-// - store annotation IDs in a separate entry in local storage
+// - store annotation IDs in a separate entry in local storage to prevent parsing everything
