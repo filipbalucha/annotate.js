@@ -2,6 +2,7 @@ export = {}
 
 // Global constants
 const FALLBACK_COLOR_IDX = 0;
+const FALLBACK_COLOR: Color = "yellow"
 const COLOR_ATTRIBUTE = "annotate-color";
 const CLASS_HIGHLIGHT = "__annotate-highlight__";
 const ID_TOOLTIP = "__annotate-tooltip__";
@@ -186,15 +187,17 @@ class AnnotationManager {
     this.colors = colors;
     this.annotations = {};
     this.tooltipManager = new TooltipManager(colors);
-    this.insertAnnotations()
+    this.loadAnnotationsFromLocalStorage()
   }
 
-  insertAnnotations = (): void => {
+  loadAnnotationsFromLocalStorage = (): void => {
     for (let i = 0; i < window.localStorage.length; i++) {
       try {
         const id = window.localStorage.key(i)
         const annotation = Annotation.fromJSON(window.localStorage.getItem(id))
-        this.insertAnnotationFromLocalStorageIntoDOM(annotation)
+
+        const range = this.annotationRange(annotation)
+        this.insertAnnotationIntoDOM(annotation, range)
       } catch (e) {
         console.error('Could not parse annotation')
         console.error(e)
@@ -203,24 +206,23 @@ class AnnotationManager {
 
   }
 
-
-  insertAnnotationFromLocalStorageIntoDOM = (annotation: Annotation) => {
+  annotationRange = (annotation: Annotation): Range => {
+    // Determine where to insert annotation
     const { path } = annotation;
-
     const element = this.elementWithHighlight(path) as Element;
     if (!element) {
       console.error('Could not find Annotation on the webpage. Annotate.js does not work on webpages whose content changes dynamically.')
+      throw new Error("Could not find annotation's element")
     }
 
-    // Manually create a selection
+    // Manually create a range
     const [start, end] = this.whereToInsert(element, annotation);
     (element.firstChild as Text).splitText(end);
     const center = (element.firstChild as Text).splitText(start)
-
     const range = document.createRange();
     range.selectNode(center);
-    this.insertAnnotationFromSelectionIntoDOM(annotation) // TODO: make this accept range (curr. uses selection) - test first if it doesn't break what's there
-    // TODO: rename functions
+
+    return range
   }
 
   addAnnotation = (annotation: Annotation, color: Color): void => {
@@ -230,7 +232,12 @@ class AnnotationManager {
     this.annotations[id] = annotation;
     this.elementWithHighlight(annotation.path);
 
-    this.insertAnnotationFromSelectionIntoDOM(annotation);
+    const selection = window.getSelection()
+    const range = selection.getRangeAt(0).cloneRange();
+    this.insertAnnotationIntoDOM(annotation, range);
+
+    selection.removeAllRanges();
+    selection.addRange(range);
   };
 
   /**
@@ -314,19 +321,14 @@ class AnnotationManager {
     }
   };
 
-  /**
-   * Inserts the annotation into the DOM.
-   *
-   * @param  {Annotation} annotation
-   */
-  insertAnnotationFromSelectionIntoDOM = (annotation: Annotation) => {
+  insertAnnotationIntoDOM = (annotation: Annotation, range: Range) => {
     const { id, highlightColor } = annotation;
 
     // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
     const span = document.createElement("span");
     span.className = CLASS_HIGHLIGHT;
     span.setAttribute("annotate-id", id);
-    span.style.backgroundColor = highlightColor;
+    span.style.backgroundColor = highlightColor || FALLBACK_COLOR;
 
     span.onclick = () => {
       const scrollLeft = document.scrollingElement.scrollLeft;
@@ -345,13 +347,7 @@ class AnnotationManager {
       );
     };
 
-    const selection = window.getSelection();
-    if (selection.rangeCount) {
-      const range = selection.getRangeAt(0).cloneRange();
-      range.surroundContents(span);
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
+    range.surroundContents(span);
   };
 }
 
@@ -412,7 +408,7 @@ class TooltipManager {
       button.onclick = () => {
         const idx = parseInt(button.getAttribute(COLOR_ATTRIBUTE));
         const newColor =
-          this.colors[idx] || this.colors[FALLBACK_COLOR_IDX] || "yellow";
+          this.colors[idx] || this.colors[FALLBACK_COLOR_IDX] || FALLBACK_COLOR;
         if (
           annotation.highlightColor &&
           annotation.highlightColor !== newColor
@@ -428,9 +424,6 @@ class TooltipManager {
     }
   };
 }
-
-
-// window.localStorage.clear() // TODO: remove
 
 class Annotate {
   annotationManager: AnnotationManager;
@@ -464,16 +457,21 @@ class Annotate {
   };
 }
 
-// TODO:
+
 // - easy bugs
 // -> clicking elsewhere not working
 // -> selecting other text not working
+
+// - important bugs
+// -> changing color for re-inserted not working
 
 // - local storage
 //    -> add range when reconstructing selections or do node splitting and insertion using insertBefore (https://developer.mozilla.org/en-US/docs/Web/API/Node/insertBefore)
 // - tooltip comments
 // - tooltip delete button
-//    -> useful: https://stackoverflow.com/questions/1614658/how-do-you-undo-surroundcontents-in-javascript
+//    -> 1. hoist children: https://stackoverflow.com/questions/1614658/how-do-you-undo-surroundcontents-in-javascript
+//    -> 2. normalize text nodes: https://developer.mozilla.org/en-US/docs/Web/API/Node/normalize
+//    (maybe also consult https://stackoverflow.com/a/57722235)
 // - optimize for multiple sub-pages
 //    -> each annotation storage will be bound to a URL (with filtered out query strings, etc.)
 //    -> useful: https://developer.mozilla.org/en-US/docs/Web/API/URL
