@@ -33,3 +33,17 @@
 .__annotate-highlight__:hover {
   filter: brightness(95%);
 }
+
+#__annotate-navigator__ {
+  background-color: lightgray;
+  width: 25vw;
+  height: 25vh;
+
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+
+  border: 1px solid gray;
+  border-radius: 5px;
+  padding: 2px;
+}
