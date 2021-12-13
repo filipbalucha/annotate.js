@@ -5,6 +5,8 @@ const COLOR_ATTRIBUTE = "annotate-color";
 const CLASS_HIGHLIGHT = "__annotate-highlight__";
 const ID_TOOLTIP = "__annotate-tooltip__";
 const CLASS_COLOR_BUTTON = "__annotate-color__";
+const ID_NAVIGATOR = "__annotate-navigator__";
+const ID_TOGGLE = "__annotate-toggle__";
 
 // Data
 
@@ -448,6 +450,23 @@ class Annotate {
     // TODO: merge Annotate and AnnotateManager? export AnnotationManager as
     this.annotationManager = new AnnotationManager(colors);
     document.addEventListener("mouseup", this.handleSelection);
+
+    const navigator = document.getElementById(ID_NAVIGATOR);
+    if (navigator) {
+      navigator.onclick = () => {
+        navigator.style.visibility = "hidden";
+      };
+    }
+    const toggle = document.getElementById(ID_TOGGLE);
+    if (toggle) {
+      toggle.textContent = "a";
+      toggle.onclick = () => {
+        const navigator = document.getElementById(ID_NAVIGATOR);
+        if (navigator) {
+          navigator.style.visibility = "visible";
+        }
+      };
+    }
   }
 
   handleSelection = (event: MouseEvent): void => {

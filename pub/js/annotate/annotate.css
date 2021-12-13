@@ -46,4 +46,30 @@
   border: 1px solid gray;
   border-radius: 5px;
   padding: 2px;
+
+  visibility: hidden;
+}
+
+#__annotate-toggle__ {
+  background-color: lightgray;
+  border: 1px solid gray;
+  border-radius: 50%;
+  width: 3rem;
+  aspect-ratio: 1/1;
+
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 2.5rem;
+  font-family: serif;
+}
+
+#__annotate-toggle__:hover {
+  cursor: pointer;
+  background-color: rgb(195, 193, 193);
 }

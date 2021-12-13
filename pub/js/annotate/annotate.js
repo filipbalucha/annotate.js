@@ -5,6 +5,8 @@ var COLOR_ATTRIBUTE = "annotate-color";
 var CLASS_HIGHLIGHT = "__annotate-highlight__";
 var ID_TOOLTIP = "__annotate-tooltip__";
 var CLASS_COLOR_BUTTON = "__annotate-color__";
+var ID_NAVIGATOR = "__annotate-navigator__";
+var ID_TOGGLE = "__annotate-toggle__";
 var Annotation = /** @class */ (function () {
     function Annotation(anchor, anchorOffset, highlightedString, comment) {
         var _this = this;
@@ -367,6 +369,22 @@ var Annotate = /** @class */ (function () {
         // TODO: merge Annotate and AnnotateManager? export AnnotationManager as
         this.annotationManager = new AnnotationManager(colors);
         document.addEventListener("mouseup", this.handleSelection);
+        var navigator = document.getElementById(ID_NAVIGATOR);
+        if (navigator) {
+            navigator.onclick = function () {
+                navigator.style.visibility = "hidden";
+            };
+        }
+        var toggle = document.getElementById(ID_TOGGLE);
+        if (toggle) {
+            toggle.textContent = "a";
+            toggle.onclick = function () {
+                var navigator = document.getElementById(ID_NAVIGATOR);
+                if (navigator) {
+                    navigator.style.visibility = "visible";
+                }
+            };
+        }
     }
     return Annotate;
 }());
