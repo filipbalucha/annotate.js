@@ -114,6 +114,7 @@
             };
             this.path = this.pathTo(anchor.parentElement);
             this.comment = comment;
+            this.highlightedString = highlightedString;
             this.regex = this.innerHtmlReadyRegex(highlightedString);
             this.encodedRegex = encodeURIComponent(this.regex.source);
             this.pos = this.positionWithinParentElement(anchor, anchorOffset, this.regex);
@@ -211,10 +212,10 @@
             this.whereToInsert = function (element, annotation) {
                 var regex = annotation.regex, pos = annotation.pos;
                 var curr = element.firstChild;
+                var matchPos = -1;
                 while (curr) {
                     var start = 0;
                     var end = 0;
-                    var matchPos = -1;
                     var match = void 0;
                     // Recursively search current node for matches
                     while ((match = curr.textContent.substring(end).match(regex))) {
@@ -452,9 +453,8 @@
                     var card = document.createElement("div");
                     card.style.backgroundColor = annotationDetails[id].highlightColor;
                     card.className = NavigatorManager.CLASS_NAVIGATOR_CARD;
-                    var _a = annotationDetails[id], comment = _a.comment, regex = _a.regex;
-                    card.innerText = comment ? comment.substring(0, 20) : regex.toString(); // TODO: set to highlighted text or some
-                    console.log(annotationDetails[id].comment);
+                    var _a = annotationDetails[id], comment = _a.comment, highlightedString = _a.highlightedString;
+                    card.innerText = comment ? comment.substring(0, 20) : highlightedString;
                     card.onclick = function () {
                         return annotationElement.scrollIntoView({
                             behavior: "smooth",
@@ -532,7 +532,9 @@
     window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
 // - overview element!!!
-// - bug: annotating spaces - this is due to using regex, not doing should resolve the issue
+// -> show tooltip
+// -> filter
+// -> call update (don't reset scroll if possible - memoize in update())
 // - color picking - allow the end users to select their own highlight color using a color picker
 // - move CSS to TS
 // - store annotation IDs in a separate entry in local storage to prevent parsing everything - local storage manager???

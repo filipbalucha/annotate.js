@@ -21,6 +21,7 @@
   class Annotation {
     path: Path;
     comment: string;
+    highlightedString: string;
     regex: RegExp;
     encodedRegex: string;
     pos: number;
@@ -36,6 +37,7 @@
     ) {
       this.path = this.pathTo(anchor.parentElement);
       this.comment = comment;
+      this.highlightedString = highlightedString;
       this.regex = this.innerHtmlReadyRegex(highlightedString);
       this.encodedRegex = encodeURIComponent(this.regex.source);
       this.pos = this.positionWithinParentElement(
@@ -289,10 +291,10 @@
       const { regex, pos } = annotation;
 
       let curr: Node = element.firstChild;
+      let matchPos = -1;
       while (curr) {
         let start = 0;
         let end = 0;
-        let matchPos = -1;
         let match: RegExpMatchArray | null;
         // Recursively search current node for matches
         while ((match = curr.textContent.substring(end).match(regex))) {
@@ -602,10 +604,9 @@
         const card = document.createElement("div");
         card.style.backgroundColor = annotationDetails[id].highlightColor;
         card.className = NavigatorManager.CLASS_NAVIGATOR_CARD;
-        const { comment, regex } = annotationDetails[id];
-        card.innerText = comment ? comment.substring(0, 20) : regex.toString(); // TODO: set to highlighted text or some
+        const { comment, highlightedString } = annotationDetails[id];
+        card.innerText = comment ? comment.substring(0, 20) : highlightedString;
 
-        console.log(annotationDetails[id].comment);
         card.onclick = () =>
           annotationElement.scrollIntoView({
             behavior: "smooth",
@@ -691,8 +692,9 @@
 })(window, window.document);
 
 // - overview element!!!
-
-// - bug: annotating spaces - this is due to using regex, not doing should resolve the issue
+// -> show tooltip
+// -> filter
+// -> call update (don't reset scroll if possible - memoize in update())
 
 // - color picking - allow the end users to select their own highlight color using a color picker
 
