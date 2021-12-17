@@ -460,17 +460,36 @@
                     var colorButton = document.createElement("button");
                     colorButton.className = NavigatorManager.CLASS_COLOR_BUTTON;
                     colorButton.style.backgroundColor = color;
+                    if (_this.filterColor === color) {
+                        colorButton.style.border = "2px solid gray";
+                    }
+                    colorButton.onclick = function () {
+                        if (_this.filterColor === color) {
+                            _this.filterColor = null;
+                        }
+                        else {
+                            _this.filterColor = color;
+                        }
+                        _this.update(sortedAnnotations, annotationDetails);
+                    };
                     colorFilter.appendChild(colorButton);
                 });
-                console.log(colorFilter);
+                // TODO: select if selected filter
                 _this.navigator.appendChild(colorFilter);
+                // Add annotation cards
+                var cards = document.createElement("div");
+                cards.style.overflow = "auto";
                 var _loop_2 = function (i) {
                     var annotationElement = sortedAnnotations[i];
                     var id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
+                    if (_this.filterColor &&
+                        annotationDetails[id].highlightColor !== _this.filterColor) {
+                        return "continue";
+                    }
+                    var _a = annotationDetails[id], comment = _a.comment, highlightedString = _a.highlightedString, highlightColor = _a.highlightColor;
                     var card = document.createElement("div");
-                    card.style.backgroundColor = annotationDetails[id].highlightColor;
+                    card.style.backgroundColor = highlightColor;
                     card.className = NavigatorManager.CLASS_NAVIGATOR_CARD;
-                    var _a = annotationDetails[id], comment = _a.comment, highlightedString = _a.highlightedString;
                     if (comment) {
                         card.innerText = comment.substring(0, 20);
                     }
@@ -487,12 +506,12 @@
                             block: "center"
                         });
                     };
-                    _this.navigator.appendChild(card);
+                    cards.appendChild(card);
                 };
-                // Add annotation cards
                 for (var i = 0; i < sortedAnnotations.length; i++) {
                     _loop_2(i);
                 }
+                _this.navigator.appendChild(cards);
             };
             this.insertToggleNavigatorIntoDOM = function () {
                 var navigator = document.createElement("div");

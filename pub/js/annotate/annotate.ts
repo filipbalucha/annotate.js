@@ -587,6 +587,7 @@
 
     navigator: HTMLElement;
     toggle: HTMLElement;
+    filterColor: Annotation["highlightColor"];
 
     constructor() {
       const { navigator, toggle } = this.insertToggleNavigatorIntoDOM();
@@ -613,21 +614,43 @@
         const colorButton = document.createElement("button");
         colorButton.className = NavigatorManager.CLASS_COLOR_BUTTON;
         colorButton.style.backgroundColor = color;
+        if (this.filterColor === color) {
+          colorButton.style.border = "2px solid gray";
+        }
+        colorButton.onclick = () => {
+          if (this.filterColor === color) {
+            this.filterColor = null;
+          } else {
+            this.filterColor = color;
+          }
+          this.update(sortedAnnotations, annotationDetails);
+        };
         colorFilter.appendChild(colorButton);
       });
 
-      console.log(colorFilter);
+      // TODO: select if selected filter
+
       this.navigator.appendChild(colorFilter);
 
       // Add annotation cards
+      const cards = document.createElement("div");
+      cards.style.overflow = "auto";
       for (let i = 0; i < sortedAnnotations.length; i++) {
         const annotationElement = sortedAnnotations[i];
         const id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
 
+        if (
+          this.filterColor &&
+          annotationDetails[id].highlightColor !== this.filterColor
+        ) {
+          continue;
+        }
+
+        const { comment, highlightedString, highlightColor } =
+          annotationDetails[id];
         const card = document.createElement("div");
-        card.style.backgroundColor = annotationDetails[id].highlightColor;
+        card.style.backgroundColor = highlightColor;
         card.className = NavigatorManager.CLASS_NAVIGATOR_CARD;
-        const { comment, highlightedString } = annotationDetails[id];
         if (comment) {
           card.innerText = comment.substring(0, 20);
         } else if (highlightedString.match(/\s+/)) {
@@ -642,8 +665,9 @@
             behavior: "smooth",
             block: "center",
           });
-        this.navigator.appendChild(card);
+        cards.appendChild(card);
       }
+      this.navigator.appendChild(cards);
     };
 
     insertToggleNavigatorIntoDOM = (): {
