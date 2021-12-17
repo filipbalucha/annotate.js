@@ -605,7 +605,14 @@
         card.style.backgroundColor = annotationDetails[id].highlightColor;
         card.className = NavigatorManager.CLASS_NAVIGATOR_CARD;
         const { comment, highlightedString } = annotationDetails[id];
-        card.innerText = comment ? comment.substring(0, 20) : highlightedString;
+        if (comment) {
+          card.innerText = comment.substring(0, 20);
+        } else if (highlightedString.match(/\s+/)) {
+          card.innerText = "empty";
+          card.style.fontStyle = "italic";
+        } else {
+          card.innerText = highlightedString;
+        }
 
         card.onclick = () =>
           annotationElement.scrollIntoView({
