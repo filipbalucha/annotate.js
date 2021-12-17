@@ -26,6 +26,26 @@ p {
   margin: 0;
 }
 
+a:visited {
+  color: unset;
+}
+
+.button {
+  height: 1rem;
+  margin: 0.5rem;
+  padding: 10px;
+  border-radius: 5px;
+  width: fit-content;
+  border: 1px solid gray;
+  text-decoration: none;
+  color: none;
+  text-align: center;
+}
+
+.button:hover {
+  background-color: lightgray;
+}
+
 .heading {
   text-align: center;
   font-size: 4rem;
