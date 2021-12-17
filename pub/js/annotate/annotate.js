@@ -1,4 +1,5 @@
 (function (window, document) {
+    // TODO: move to classes
     // Global constants
     var FALLBACK_COLOR_IDX = 0;
     var FALLBACK_COLOR = "yellow";
@@ -6,7 +7,6 @@
     var ID_COMMENT = "__annotate-comment__";
     var ID_DELETE_BUTTON = "__annotate-delete__";
     var COLOR_ATTRIBUTE = "annotate-color";
-    var CLASS_HIGHLIGHT = "__annotate-highlight__";
     var CLASS_COLOR_BUTTON = "__annotate-color__";
     var CLASS_COLOR_ROW = "__annotate-color-row__";
     var ATTRIBUTE_ANNOTATION_ID = "annotate-id";
@@ -136,7 +136,9 @@
          * @memberof Annotation
          */
         Annotation.canHighlight = function (anchorNode) {
-            var highlighted = function (el) { return el.classList.contains(CLASS_HIGHLIGHT); };
+            var highlighted = function (el) {
+                return el.classList.contains(AnnotationManager.CLASS_HIGHLIGHT);
+            };
             if (anchorNode.nodeType === Node.ELEMENT_NODE) {
                 return !highlighted(anchorNode);
             }
@@ -150,8 +152,14 @@
         return Annotation;
     }());
     var AnnotationManager = /** @class */ (function () {
-        function AnnotationManager(colors) {
+        function AnnotationManager(colors, navigatorManager) {
             var _this = this;
+            this.updateNavigator = function () {
+                if (_this.navigatorManager) {
+                    var annotationElements = document.getElementsByClassName(AnnotationManager.CLASS_HIGHLIGHT);
+                    _this.navigatorManager.update(annotationElements, _this.annotations);
+                }
+            };
             // TODO: merge with addannotation somehow?
             this.loadAnnotationsFromLocalStorage = function () {
                 for (var i = 0; i < window.localStorage.length; i++) {
@@ -184,6 +192,7 @@
                 range.selectNode(center);
                 return range;
             };
+            // TODO: call navig
             this.addAnnotation = function (annotation, color) {
                 var id = annotation.id;
                 annotation.highlightColor = color;
@@ -237,11 +246,13 @@
                 }
                 return node;
             };
+            // TODO: call navig
             this.updateAnnotationColor = function (annotation, color) {
                 annotation.highlightColor = color;
                 _this.updateAnnotationInLocalStorage(annotation);
                 _this.updateAnnotationColorInDOM(annotation, color);
             };
+            // TODO: call navig
             this.updateAnnotationComment = function (annotation, newComment) {
                 annotation.comment = newComment;
                 _this.updateAnnotationInLocalStorage(annotation);
@@ -263,7 +274,7 @@
                 _this.tooltipManager.showTooltip(annotation.comment, x + scrollLeft, y + scrollTop, height, function (color) { return _this.addAnnotation(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); });
             };
             this.deleteAnnotation = function (annotation) {
-                delete _this.annotations[annotation.id]; // TODO: uncomment!!!
+                delete _this.annotations[annotation.id];
                 window.localStorage.removeItem(annotation.id);
                 _this.removeAnnotationFromDOM(annotation);
                 _this.tooltipManager.hideTooltip();
@@ -274,14 +285,14 @@
                 annotationElement.style.backgroundColor = color;
             };
             this.findAnnotationInDOM = function (annotation) {
-                var highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
+                var highlights = document.getElementsByClassName(AnnotationManager.CLASS_HIGHLIGHT);
                 for (var i = 0; i < highlights.length; i++) {
                     var highlight = highlights[i];
                     if (highlight.getAttribute(ATTRIBUTE_ANNOTATION_ID) === annotation.id) {
                         return highlight;
                     }
                 }
-                return;
+                return null;
             };
             this.removeAnnotationFromDOM = function (annotation) {
                 // Note: code adapted from kennebec's answer: https://stackoverflow.com/a/1614909/7427716
@@ -299,7 +310,7 @@
                 var id = annotation.id, highlightColor = annotation.highlightColor;
                 // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
                 var span = document.createElement("span");
-                span.className = CLASS_HIGHLIGHT;
+                span.className = AnnotationManager.CLASS_HIGHLIGHT;
                 span.setAttribute(ATTRIBUTE_ANNOTATION_ID, id);
                 span.style.backgroundColor = highlightColor || FALLBACK_COLOR;
                 span.onclick = function () {
@@ -316,7 +327,10 @@
             this.annotations = {};
             this.tooltipManager = new TooltipManager(colors);
             this.loadAnnotationsFromLocalStorage();
+            this.navigatorManager = navigatorManager;
+            this.updateNavigator();
         }
+        AnnotationManager.CLASS_HIGHLIGHT = "__annotate-highlight__";
         return AnnotationManager;
     }());
     var TooltipManager = /** @class */ (function () {
@@ -428,19 +442,40 @@
         return TooltipManager;
     }());
     var NavigatorManager = /** @class */ (function () {
-        function NavigatorManager(annotationManager) {
+        function NavigatorManager() {
             var _this = this;
-            this.ID_NAVIGATOR = "__annotate-navigator__";
-            this.ID_TOGGLE = "__annotate-toggle__";
+            this.update = function (sortedAnnotations, annotationDetails) {
+                _this.navigator.replaceChildren();
+                var _loop_2 = function (i) {
+                    var annotationElement = sortedAnnotations[i];
+                    var id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
+                    var card = document.createElement("div");
+                    card.style.backgroundColor = annotationDetails[id].highlightColor;
+                    card.className = NavigatorManager.CLASS_NAVIGATOR_CARD;
+                    var _a = annotationDetails[id], comment = _a.comment, regex = _a.regex;
+                    card.innerText = comment ? comment.substring(0, 20) : regex.toString(); // TODO: set to highlighted text or some
+                    console.log(annotationDetails[id].comment);
+                    card.onclick = function () {
+                        return annotationElement.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center"
+                        });
+                    };
+                    _this.navigator.appendChild(card);
+                };
+                for (var i = 0; i < sortedAnnotations.length; i++) {
+                    _loop_2(i);
+                }
+            };
             this.insertToggleNavigatorIntoDOM = function () {
                 var navigator = document.createElement("div");
-                navigator.id = _this.ID_NAVIGATOR;
+                navigator.id = NavigatorManager.ID_NAVIGATOR;
                 navigator.onclick = function () {
                     navigator.style.visibility = "hidden";
                     toggle.style.visibility = "visible";
                 };
                 var toggle = document.createElement("div");
-                toggle.id = _this.ID_TOGGLE;
+                toggle.id = NavigatorManager.ID_TOGGLE;
                 toggle.textContent = "a";
                 toggle.onclick = function () {
                     navigator.style.visibility = "visible";
@@ -453,11 +488,13 @@
             this.wasClicked = function (target) {
                 return _this.toggle.contains(target) || _this.navigator.contains(target);
             };
-            this.annotationManager = annotationManager;
             var _a = this.insertToggleNavigatorIntoDOM(), navigator = _a.navigator, toggle = _a.toggle;
             this.navigator = navigator;
             this.toggle = toggle;
         }
+        NavigatorManager.ID_NAVIGATOR = "__annotate-navigator__";
+        NavigatorManager.ID_TOGGLE = "__annotate-toggle__";
+        NavigatorManager.CLASS_NAVIGATOR_CARD = "__annotate-navigator__card__";
         return NavigatorManager;
     }());
     var Annotate = /** @class */ (function () {
@@ -485,11 +522,9 @@
                     _this.annotationManager.startSelectionInteraction();
                 }
             };
-            this.annotationManager = new AnnotationManager(colors);
+            this.navigatorManager = showNavigator ? new NavigatorManager() : null;
+            this.annotationManager = new AnnotationManager(colors, this.navigatorManager);
             document.addEventListener("mouseup", this.handleSelection);
-            if (showNavigator) {
-                this.navigatorManager = new NavigatorManager(this.annotationManager);
-            }
         }
         return Annotate;
     }());

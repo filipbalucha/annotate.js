@@ -1,4 +1,5 @@
 (function (window, document) {
+  // TODO: move to classes
   // Global constants
   const FALLBACK_COLOR_IDX = 0;
   const FALLBACK_COLOR: Color = "yellow";
@@ -6,7 +7,6 @@
   const ID_COMMENT = "__annotate-comment__";
   const ID_DELETE_BUTTON = "__annotate-delete__";
   const COLOR_ATTRIBUTE = "annotate-color";
-  const CLASS_HIGHLIGHT = "__annotate-highlight__";
   const CLASS_COLOR_BUTTON = "__annotate-color__";
   const CLASS_COLOR_ROW = "__annotate-color-row__";
   const ATTRIBUTE_ANNOTATION_ID = "annotate-id";
@@ -180,7 +180,8 @@
      * @memberof Annotation
      */
     static canHighlight = (anchorNode: Node): boolean => {
-      const highlighted = (el) => el.classList.contains(CLASS_HIGHLIGHT);
+      const highlighted = (el) =>
+        el.classList.contains(AnnotationManager.CLASS_HIGHLIGHT);
       if (anchorNode.nodeType === Node.ELEMENT_NODE) {
         return !highlighted(anchorNode);
       } else if (anchorNode.parentElement) {
@@ -192,16 +193,32 @@
   }
 
   class AnnotationManager {
+    static readonly CLASS_HIGHLIGHT = "__annotate-highlight__";
+
     colors: Color[];
     annotations: { [key: string]: Annotation };
     tooltipManager: TooltipManager;
+    navigatorManager: NavigatorManager;
 
-    constructor(colors) {
+    constructor(colors, navigatorManager: NavigatorManager) {
       this.colors = colors;
       this.annotations = {};
       this.tooltipManager = new TooltipManager(colors);
+
       this.loadAnnotationsFromLocalStorage();
+
+      this.navigatorManager = navigatorManager;
+      this.updateNavigator();
     }
+
+    updateNavigator = (): void => {
+      if (this.navigatorManager) {
+        const annotationElements = document.getElementsByClassName(
+          AnnotationManager.CLASS_HIGHLIGHT
+        );
+        this.navigatorManager.update(annotationElements, this.annotations);
+      }
+    };
 
     // TODO: merge with addannotation somehow?
     loadAnnotationsFromLocalStorage = (): void => {
@@ -243,6 +260,7 @@
       return range;
     };
 
+    // TODO: call navig
     addAnnotation = (annotation: Annotation, color: Color): void => {
       const { id } = annotation;
 
@@ -309,6 +327,7 @@
       return node as Element;
     };
 
+    // TODO: call navig
     updateAnnotationColor = (
       annotation: Annotation,
       color: Annotation["highlightColor"]
@@ -318,6 +337,7 @@
       this.updateAnnotationColorInDOM(annotation, color);
     };
 
+    // TODO: call navig
     updateAnnotationComment = (
       annotation: Annotation,
       newComment: Annotation["comment"]
@@ -355,7 +375,7 @@
     };
 
     deleteAnnotation = (annotation: Annotation): void => {
-      delete this.annotations[annotation.id]; // TODO: uncomment!!!
+      delete this.annotations[annotation.id];
       window.localStorage.removeItem(annotation.id);
       this.removeAnnotationFromDOM(annotation);
       this.tooltipManager.hideTooltip();
@@ -367,15 +387,17 @@
       annotationElement.style.backgroundColor = color;
     };
 
-    findAnnotationInDOM = (annotation: Annotation): HTMLElement | undefined => {
-      const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
+    findAnnotationInDOM = (annotation: Annotation): HTMLElement | null => {
+      const highlights = document.getElementsByClassName(
+        AnnotationManager.CLASS_HIGHLIGHT
+      );
       for (let i = 0; i < highlights.length; i++) {
         const highlight = highlights[i] as HTMLElement;
         if (highlight.getAttribute(ATTRIBUTE_ANNOTATION_ID) === annotation.id) {
           return highlight;
         }
       }
-      return;
+      return null;
     };
 
     removeAnnotationFromDOM = (annotation: Annotation): void => {
@@ -397,7 +419,7 @@
 
       // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
       const span = document.createElement("span");
-      span.className = CLASS_HIGHLIGHT;
+      span.className = AnnotationManager.CLASS_HIGHLIGHT;
       span.setAttribute(ATTRIBUTE_ANNOTATION_ID, id);
       span.style.backgroundColor = highlightColor || FALLBACK_COLOR;
 
@@ -554,33 +576,58 @@
   }
 
   class NavigatorManager {
-    readonly ID_NAVIGATOR = "__annotate-navigator__";
-    readonly ID_TOGGLE = "__annotate-toggle__";
+    static readonly ID_NAVIGATOR = "__annotate-navigator__";
+    static readonly ID_TOGGLE = "__annotate-toggle__";
+    static readonly CLASS_NAVIGATOR_CARD = "__annotate-navigator__card__";
+    static readonly;
 
-    annotationManager: AnnotationManager;
     navigator: HTMLElement;
     toggle: HTMLElement;
 
-    constructor(annotationManager: AnnotationManager) {
-      this.annotationManager = annotationManager;
+    constructor() {
       const { navigator, toggle } = this.insertToggleNavigatorIntoDOM();
       this.navigator = navigator;
       this.toggle = toggle;
     }
+
+    update = (
+      sortedAnnotations: HTMLCollectionOf<Element>,
+      annotationDetails: AnnotationManager["annotations"]
+    ): void => {
+      this.navigator.replaceChildren();
+      for (let i = 0; i < sortedAnnotations.length; i++) {
+        const annotationElement = sortedAnnotations[i];
+        const id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
+
+        const card = document.createElement("div");
+        card.style.backgroundColor = annotationDetails[id].highlightColor;
+        card.className = NavigatorManager.CLASS_NAVIGATOR_CARD;
+        const { comment, regex } = annotationDetails[id];
+        card.innerText = comment ? comment.substring(0, 20) : regex.toString(); // TODO: set to highlighted text or some
+
+        console.log(annotationDetails[id].comment);
+        card.onclick = () =>
+          annotationElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        this.navigator.appendChild(card);
+      }
+    };
 
     insertToggleNavigatorIntoDOM = (): {
       navigator: HTMLElement;
       toggle: HTMLElement;
     } => {
       const navigator = document.createElement("div");
-      navigator.id = this.ID_NAVIGATOR;
+      navigator.id = NavigatorManager.ID_NAVIGATOR;
       navigator.onclick = () => {
         navigator.style.visibility = "hidden";
         toggle.style.visibility = "visible";
       };
 
       const toggle = document.createElement("div");
-      toggle.id = this.ID_TOGGLE;
+      toggle.id = NavigatorManager.ID_TOGGLE;
       toggle.textContent = "a";
       toggle.onclick = () => {
         navigator.style.visibility = "visible";
@@ -603,11 +650,12 @@
     navigatorManager: NavigatorManager;
 
     constructor(colors: Color[], showNavigator: boolean) {
-      this.annotationManager = new AnnotationManager(colors);
+      this.navigatorManager = showNavigator ? new NavigatorManager() : null;
+      this.annotationManager = new AnnotationManager(
+        colors,
+        this.navigatorManager
+      );
       document.addEventListener("mouseup", this.handleSelection);
-      if (showNavigator) {
-        this.navigatorManager = new NavigatorManager(this.annotationManager);
-      }
     }
 
     handleSelection = (event: MouseEvent): void => {

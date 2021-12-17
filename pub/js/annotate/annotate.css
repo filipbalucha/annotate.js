@@ -62,7 +62,7 @@
 #__annotate-navigator__ {
   background-color: lightgray;
   width: 25vw;
-  height: 25vh;
+  height: 16vh;
 
   position: fixed;
   bottom: 15px;
@@ -73,6 +73,26 @@
   padding: 2px;
 
   visibility: hidden;
+
+  overflow-y: scroll;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+#__annotate-navigator__::-webkit-scrollbar {
+  display: none;
+}
+
+#__annotate-navigator__ .__annotate-navigator__card__ {
+  border-radius: 5px;
+  margin: 5px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+#__annotate-navigator__ .__annotate-navigator__card__:hover {
+  cursor: pointer;
 }
 
 #__annotate-toggle__ {
