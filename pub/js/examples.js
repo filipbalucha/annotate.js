@@ -8,7 +8,9 @@ const colors = [
   "#BDB2FF",
 ];
 
-new Annotate(colors);
+const showNavigator = true;
+
+new Annotate(colors, showNavigator);
 
 // Simulate growing content
 const paragraph =

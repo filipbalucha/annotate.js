@@ -3,10 +3,8 @@
   const FALLBACK_COLOR_IDX = 0;
   const FALLBACK_COLOR: Color = "yellow";
   const ID_TOOLTIP = "__annotate-tooltip__";
-  const ID_NAVIGATOR = "__annotate-navigator__";
   const ID_COMMENT = "__annotate-comment__";
   const ID_DELETE_BUTTON = "__annotate-delete__";
-  const ID_TOGGLE = "__annotate-toggle__";
   const COLOR_ATTRIBUTE = "annotate-color";
   const CLASS_HIGHLIGHT = "__annotate-highlight__";
   const CLASS_COLOR_BUTTON = "__annotate-color__";
@@ -555,29 +553,60 @@
     };
   }
 
+  class NavigatorManager {
+    readonly ID_NAVIGATOR = "__annotate-navigator__";
+    readonly ID_TOGGLE = "__annotate-toggle__";
+
+    annotationManager: AnnotationManager;
+    navigator: HTMLElement;
+    toggle: HTMLElement;
+
+    constructor(annotationManager: AnnotationManager) {
+      this.annotationManager = annotationManager;
+      const { navigator, toggle } = this.insertToggleNavigatorIntoDOM();
+      this.navigator = navigator;
+      this.toggle = toggle;
+    }
+
+    insertToggleNavigatorIntoDOM = (): {
+      navigator: HTMLElement;
+      toggle: HTMLElement;
+    } => {
+      const navigator = document.createElement("div");
+      navigator.id = this.ID_NAVIGATOR;
+      navigator.onclick = () => {
+        navigator.style.visibility = "hidden";
+        toggle.style.visibility = "visible";
+      };
+
+      const toggle = document.createElement("div");
+      toggle.id = this.ID_TOGGLE;
+      toggle.textContent = "a";
+      toggle.onclick = () => {
+        navigator.style.visibility = "visible";
+        toggle.style.visibility = "hidden";
+      };
+
+      document.body.appendChild(navigator);
+      document.body.appendChild(toggle);
+
+      return { navigator, toggle };
+    };
+
+    wasClicked = (target: Element): boolean => {
+      return this.toggle.contains(target) || this.navigator.contains(target);
+    };
+  }
+
   class Annotate {
     annotationManager: AnnotationManager;
+    navigatorManager: NavigatorManager;
 
-    constructor(colors: Color[]) {
-      // TODO: merge Annotate and AnnotateManager? export AnnotationManager as
+    constructor(colors: Color[], showNavigator: boolean) {
       this.annotationManager = new AnnotationManager(colors);
       document.addEventListener("mouseup", this.handleSelection);
-
-      const navigator = document.getElementById(ID_NAVIGATOR);
-      if (navigator) {
-        navigator.onclick = () => {
-          navigator.style.visibility = "hidden";
-        };
-      }
-      const toggle = document.getElementById(ID_TOGGLE);
-      if (toggle) {
-        toggle.textContent = "a";
-        toggle.onclick = () => {
-          const navigator = document.getElementById(ID_NAVIGATOR);
-          if (navigator) {
-            navigator.style.visibility = "visible";
-          }
-        };
+      if (showNavigator) {
+        this.navigatorManager = new NavigatorManager(this.annotationManager);
       }
     }
 
@@ -585,8 +614,13 @@
       const selection = window.getSelection();
       const { anchorNode, focusNode } = selection;
 
-      const tooltip = document.getElementById(ID_TOOLTIP);
       const target = event.target as Element;
+      const clickedNavigator = this.navigatorManager?.wasClicked(target);
+      if (clickedNavigator) {
+        return;
+      }
+
+      const tooltip = document.getElementById(ID_TOOLTIP);
       const clickedTooltip = tooltip && tooltip.contains(target);
       if (!clickedTooltip) {
         document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager

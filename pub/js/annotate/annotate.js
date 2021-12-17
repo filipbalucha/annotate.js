@@ -3,10 +3,8 @@
     var FALLBACK_COLOR_IDX = 0;
     var FALLBACK_COLOR = "yellow";
     var ID_TOOLTIP = "__annotate-tooltip__";
-    var ID_NAVIGATOR = "__annotate-navigator__";
     var ID_COMMENT = "__annotate-comment__";
     var ID_DELETE_BUTTON = "__annotate-delete__";
-    var ID_TOGGLE = "__annotate-toggle__";
     var COLOR_ATTRIBUTE = "annotate-color";
     var CLASS_HIGHLIGHT = "__annotate-highlight__";
     var CLASS_COLOR_BUTTON = "__annotate-color__";
@@ -429,14 +427,52 @@
         }
         return TooltipManager;
     }());
+    var NavigatorManager = /** @class */ (function () {
+        function NavigatorManager(annotationManager) {
+            var _this = this;
+            this.ID_NAVIGATOR = "__annotate-navigator__";
+            this.ID_TOGGLE = "__annotate-toggle__";
+            this.insertToggleNavigatorIntoDOM = function () {
+                var navigator = document.createElement("div");
+                navigator.id = _this.ID_NAVIGATOR;
+                navigator.onclick = function () {
+                    navigator.style.visibility = "hidden";
+                    toggle.style.visibility = "visible";
+                };
+                var toggle = document.createElement("div");
+                toggle.id = _this.ID_TOGGLE;
+                toggle.textContent = "a";
+                toggle.onclick = function () {
+                    navigator.style.visibility = "visible";
+                    toggle.style.visibility = "hidden";
+                };
+                document.body.appendChild(navigator);
+                document.body.appendChild(toggle);
+                return { navigator: navigator, toggle: toggle };
+            };
+            this.wasClicked = function (target) {
+                return _this.toggle.contains(target) || _this.navigator.contains(target);
+            };
+            this.annotationManager = annotationManager;
+            var _a = this.insertToggleNavigatorIntoDOM(), navigator = _a.navigator, toggle = _a.toggle;
+            this.navigator = navigator;
+            this.toggle = toggle;
+        }
+        return NavigatorManager;
+    }());
     var Annotate = /** @class */ (function () {
-        function Annotate(colors) {
+        function Annotate(colors, showNavigator) {
             var _this = this;
             this.handleSelection = function (event) {
+                var _a;
                 var selection = window.getSelection();
                 var anchorNode = selection.anchorNode, focusNode = selection.focusNode;
-                var tooltip = document.getElementById(ID_TOOLTIP);
                 var target = event.target;
+                var clickedNavigator = (_a = _this.navigatorManager) === null || _a === void 0 ? void 0 : _a.wasClicked(target);
+                if (clickedNavigator) {
+                    return;
+                }
+                var tooltip = document.getElementById(ID_TOOLTIP);
                 var clickedTooltip = tooltip && tooltip.contains(target);
                 if (!clickedTooltip) {
                     document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager
@@ -449,24 +485,10 @@
                     _this.annotationManager.startSelectionInteraction();
                 }
             };
-            // TODO: merge Annotate and AnnotateManager? export AnnotationManager as
             this.annotationManager = new AnnotationManager(colors);
             document.addEventListener("mouseup", this.handleSelection);
-            var navigator = document.getElementById(ID_NAVIGATOR);
-            if (navigator) {
-                navigator.onclick = function () {
-                    navigator.style.visibility = "hidden";
-                };
-            }
-            var toggle = document.getElementById(ID_TOGGLE);
-            if (toggle) {
-                toggle.textContent = "a";
-                toggle.onclick = function () {
-                    var navigator = document.getElementById(ID_NAVIGATOR);
-                    if (navigator) {
-                        navigator.style.visibility = "visible";
-                    }
-                };
+            if (showNavigator) {
+                this.navigatorManager = new NavigatorManager(this.annotationManager);
             }
         }
         return Annotate;

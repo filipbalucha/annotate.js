@@ -35,10 +35,6 @@
   background-color: rgb(243, 241, 241);
 }
 
-#__annotate-comment__::focused {
-  outline: red;
-}
-
 #__annotate-delete__ {
   align-self: flex-end;
   width: 1rem;
