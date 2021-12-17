@@ -37,14 +37,18 @@
 
 #__annotate-delete__ {
   align-self: flex-end;
-  width: 1rem;
-  height: 1rem;
   border: none;
   margin: 4.5px;
+  display: flex;
+  padding: 4px;
+  border-radius: 50%;
+  background-color: rgb(243, 241, 241);
+  border: 1px solid gray;
 }
 
 #__annotate-delete__:hover {
   cursor: pointer;
+  background-color: rgb(236, 234, 234);
 }
 
 #__annotate-tooltip__ .__annotate-color__:hover {
@@ -62,7 +66,7 @@
 #__annotate-navigator__ {
   background-color: lightgray;
   width: 25vw;
-  height: 16vh;
+  height: 20vh;
 
   position: fixed;
   bottom: 15px;
