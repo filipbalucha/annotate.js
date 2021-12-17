@@ -95,6 +95,25 @@
   cursor: pointer;
 }
 
+#__annotate-navigator__ .__annotate-filter__ {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2px;
+}
+
+#__annotate-navigator__ .__annotate-filter-color__ {
+  border-radius: 50%;
+  border: none;
+  height: 1rem;
+  width: 1rem;
+  margin: 5px 2.5px 5px 2.5px;
+}
+
+#__annotate-navigator__ .__annotate-filter-color__ {
+  cursor: pointer;
+}
+
 #__annotate-toggle__ {
   background-color: lightgray;
   border: 1px solid gray;

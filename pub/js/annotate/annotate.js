@@ -350,7 +350,7 @@
                 for (var i = 0; i < _this.colors.length; i++) {
                     var color = _this.colors[i];
                     var colorButton = document.createElement("button");
-                    colorButton.setAttribute("class", CLASS_COLOR_BUTTON);
+                    colorButton.className = CLASS_COLOR_BUTTON;
                     colorButton.setAttribute(COLOR_ATTRIBUTE, "" + i);
                     colorButton.style.backgroundColor = color;
                     buttons.appendChild(colorButton);
@@ -445,8 +445,25 @@
     var NavigatorManager = /** @class */ (function () {
         function NavigatorManager() {
             var _this = this;
+            // Methods that manipulate the DOM:
             this.update = function (sortedAnnotations, annotationDetails) {
                 _this.navigator.replaceChildren();
+                // Add filter
+                var colorFilter = document.createElement("div");
+                colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
+                var colors = new Set();
+                for (var id in annotationDetails) {
+                    var annotation = annotationDetails[id];
+                    colors.add(annotation.highlightColor);
+                }
+                colors.forEach(function (color) {
+                    var colorButton = document.createElement("button");
+                    colorButton.className = NavigatorManager.CLASS_COLOR_BUTTON;
+                    colorButton.style.backgroundColor = color;
+                    colorFilter.appendChild(colorButton);
+                });
+                console.log(colorFilter);
+                _this.navigator.appendChild(colorFilter);
                 var _loop_2 = function (i) {
                     var annotationElement = sortedAnnotations[i];
                     var id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
@@ -472,6 +489,7 @@
                     };
                     _this.navigator.appendChild(card);
                 };
+                // Add annotation cards
                 for (var i = 0; i < sortedAnnotations.length; i++) {
                     _loop_2(i);
                 }
@@ -504,6 +522,8 @@
         NavigatorManager.ID_NAVIGATOR = "__annotate-navigator__";
         NavigatorManager.ID_TOGGLE = "__annotate-toggle__";
         NavigatorManager.CLASS_NAVIGATOR_CARD = "__annotate-navigator__card__";
+        NavigatorManager.CLASS_COLOR_ROW = "__annotate-filter__";
+        NavigatorManager.CLASS_COLOR_BUTTON = "__annotate-filter-color__";
         return NavigatorManager;
     }());
     var Annotate = /** @class */ (function () {

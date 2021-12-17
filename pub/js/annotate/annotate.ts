@@ -474,7 +474,7 @@
       for (let i = 0; i < this.colors.length; i++) {
         const color = this.colors[i];
         const colorButton = document.createElement("button");
-        colorButton.setAttribute("class", CLASS_COLOR_BUTTON);
+        colorButton.className = CLASS_COLOR_BUTTON;
         colorButton.setAttribute(COLOR_ATTRIBUTE, "" + i);
         colorButton.style.backgroundColor = color;
         buttons.appendChild(colorButton);
@@ -581,6 +581,8 @@
     static readonly ID_NAVIGATOR = "__annotate-navigator__";
     static readonly ID_TOGGLE = "__annotate-toggle__";
     static readonly CLASS_NAVIGATOR_CARD = "__annotate-navigator__card__";
+    static readonly CLASS_COLOR_ROW = "__annotate-filter__";
+    static readonly CLASS_COLOR_BUTTON = "__annotate-filter-color__";
     static readonly;
 
     navigator: HTMLElement;
@@ -592,11 +594,32 @@
       this.toggle = toggle;
     }
 
+    // Methods that manipulate the DOM:
     update = (
       sortedAnnotations: HTMLCollectionOf<Element>,
       annotationDetails: AnnotationManager["annotations"]
     ): void => {
       this.navigator.replaceChildren();
+
+      // Add filter
+      const colorFilter = document.createElement("div");
+      colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
+      const colors = new Set<Annotation["highlightColor"]>();
+      for (const id in annotationDetails) {
+        const annotation = annotationDetails[id];
+        colors.add(annotation.highlightColor);
+      }
+      colors.forEach((color) => {
+        const colorButton = document.createElement("button");
+        colorButton.className = NavigatorManager.CLASS_COLOR_BUTTON;
+        colorButton.style.backgroundColor = color;
+        colorFilter.appendChild(colorButton);
+      });
+
+      console.log(colorFilter);
+      this.navigator.appendChild(colorFilter);
+
+      // Add annotation cards
       for (let i = 0; i < sortedAnnotations.length; i++) {
         const annotationElement = sortedAnnotations[i];
         const id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
