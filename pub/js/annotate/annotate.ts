@@ -262,7 +262,6 @@
       return range;
     };
 
-    // TODO: call navig
     addAnnotation = (annotation: Annotation, color: Color): void => {
       const { id } = annotation;
 
@@ -274,6 +273,7 @@
 
       this.insertAnnotationIntoDOM(annotation, range);
       this.updateAnnotationInLocalStorage(annotation);
+      this.updateNavigator();
 
       this.tooltipManager.showDeleteButton(() =>
         this.deleteAnnotation(annotation)
@@ -329,7 +329,6 @@
       return node as Element;
     };
 
-    // TODO: call navig
     updateAnnotationColor = (
       annotation: Annotation,
       color: Annotation["highlightColor"]
@@ -337,15 +336,16 @@
       annotation.highlightColor = color;
       this.updateAnnotationInLocalStorage(annotation);
       this.updateAnnotationColorInDOM(annotation, color);
+      this.updateNavigator();
     };
 
-    // TODO: call navig
     updateAnnotationComment = (
       annotation: Annotation,
       newComment: Annotation["comment"]
     ): void => {
       annotation.comment = newComment;
       this.updateAnnotationInLocalStorage(annotation);
+      this.updateNavigator();
     };
 
     updateAnnotationInLocalStorage = (annotation: Annotation) => {
@@ -583,14 +583,15 @@
     static readonly CLASS_NAVIGATOR_CARD = "__annotate-navigator__card__";
     static readonly CLASS_COLOR_ROW = "__annotate-filter__";
     static readonly CLASS_COLOR_BUTTON = "__annotate-filter-color__";
-    static readonly;
 
+    colors: Color[];
     navigator: HTMLElement;
     toggle: HTMLElement;
     filterColor: Annotation["highlightColor"];
 
-    constructor() {
+    constructor(colors: Color[]) {
       const { navigator, toggle } = this.insertToggleNavigatorIntoDOM();
+      this.colors = colors;
       this.navigator = navigator;
       this.toggle = toggle;
     }
@@ -605,12 +606,19 @@
       // Add filter
       const colorFilter = document.createElement("div");
       colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
-      const colors = new Set<Annotation["highlightColor"]>();
+      const uniqueColors = new Set<Annotation["highlightColor"]>();
       for (const id in annotationDetails) {
         const annotation = annotationDetails[id];
-        colors.add(annotation.highlightColor);
+        uniqueColors.add(annotation.highlightColor);
       }
-      colors.forEach((color) => {
+      const sortedColors = [
+        ...this.colors.filter((color) => uniqueColors.has(color)),
+        ...Array.from(uniqueColors)
+          .filter((color) => !this.colors.includes(color))
+          .sort(),
+      ];
+
+      sortedColors.forEach((color) => {
         const colorButton = document.createElement("button");
         colorButton.className = NavigatorManager.CLASS_COLOR_BUTTON;
         colorButton.style.backgroundColor = color;
@@ -627,8 +635,6 @@
         };
         colorFilter.appendChild(colorButton);
       });
-
-      // TODO: select if selected filter
 
       this.navigator.appendChild(colorFilter);
 
@@ -676,10 +682,10 @@
     } => {
       const navigator = document.createElement("div");
       navigator.id = NavigatorManager.ID_NAVIGATOR;
-      navigator.onclick = () => {
-        navigator.style.visibility = "hidden";
-        toggle.style.visibility = "visible";
-      };
+      // navigator.onclick = () => {
+      //   navigator.style.visibility = "hidden";
+      //   toggle.style.visibility = "visible";
+      // };
 
       const toggle = document.createElement("div");
       toggle.id = NavigatorManager.ID_TOGGLE;
@@ -705,7 +711,9 @@
     navigatorManager: NavigatorManager;
 
     constructor(colors: Color[], showNavigator: boolean) {
-      this.navigatorManager = showNavigator ? new NavigatorManager() : null;
+      this.navigatorManager = showNavigator
+        ? new NavigatorManager(colors)
+        : null;
       this.annotationManager = new AnnotationManager(
         colors,
         this.navigatorManager

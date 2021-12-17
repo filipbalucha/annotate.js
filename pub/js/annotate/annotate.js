@@ -1,3 +1,12 @@
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 (function (window, document) {
     // TODO: move to classes
     // Global constants
@@ -193,7 +202,6 @@
                 range.selectNode(center);
                 return range;
             };
-            // TODO: call navig
             this.addAnnotation = function (annotation, color) {
                 var id = annotation.id;
                 annotation.highlightColor = color;
@@ -202,6 +210,7 @@
                 var range = selection.getRangeAt(0).cloneRange();
                 _this.insertAnnotationIntoDOM(annotation, range);
                 _this.updateAnnotationInLocalStorage(annotation);
+                _this.updateNavigator();
                 _this.tooltipManager.showDeleteButton(function () {
                     return _this.deleteAnnotation(annotation);
                 });
@@ -247,16 +256,16 @@
                 }
                 return node;
             };
-            // TODO: call navig
             this.updateAnnotationColor = function (annotation, color) {
                 annotation.highlightColor = color;
                 _this.updateAnnotationInLocalStorage(annotation);
                 _this.updateAnnotationColorInDOM(annotation, color);
+                _this.updateNavigator();
             };
-            // TODO: call navig
             this.updateAnnotationComment = function (annotation, newComment) {
                 annotation.comment = newComment;
                 _this.updateAnnotationInLocalStorage(annotation);
+                _this.updateNavigator();
             };
             this.updateAnnotationInLocalStorage = function (annotation) {
                 window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
@@ -443,7 +452,7 @@
         return TooltipManager;
     }());
     var NavigatorManager = /** @class */ (function () {
-        function NavigatorManager() {
+        function NavigatorManager(colors) {
             var _this = this;
             // Methods that manipulate the DOM:
             this.update = function (sortedAnnotations, annotationDetails) {
@@ -451,12 +460,15 @@
                 // Add filter
                 var colorFilter = document.createElement("div");
                 colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
-                var colors = new Set();
+                var uniqueColors = new Set();
                 for (var id in annotationDetails) {
                     var annotation = annotationDetails[id];
-                    colors.add(annotation.highlightColor);
+                    uniqueColors.add(annotation.highlightColor);
                 }
-                colors.forEach(function (color) {
+                var sortedColors = __spreadArray(__spreadArray([], _this.colors.filter(function (color) { return uniqueColors.has(color); }), true), Array.from(uniqueColors)
+                    .filter(function (color) { return !_this.colors.includes(color); })
+                    .sort(), true);
+                sortedColors.forEach(function (color) {
                     var colorButton = document.createElement("button");
                     colorButton.className = NavigatorManager.CLASS_COLOR_BUTTON;
                     colorButton.style.backgroundColor = color;
@@ -474,7 +486,6 @@
                     };
                     colorFilter.appendChild(colorButton);
                 });
-                // TODO: select if selected filter
                 _this.navigator.appendChild(colorFilter);
                 // Add annotation cards
                 var cards = document.createElement("div");
@@ -516,10 +527,10 @@
             this.insertToggleNavigatorIntoDOM = function () {
                 var navigator = document.createElement("div");
                 navigator.id = NavigatorManager.ID_NAVIGATOR;
-                navigator.onclick = function () {
-                    navigator.style.visibility = "hidden";
-                    toggle.style.visibility = "visible";
-                };
+                // navigator.onclick = () => {
+                //   navigator.style.visibility = "hidden";
+                //   toggle.style.visibility = "visible";
+                // };
                 var toggle = document.createElement("div");
                 toggle.id = NavigatorManager.ID_TOGGLE;
                 toggle.textContent = "a";
@@ -535,6 +546,7 @@
                 return _this.toggle.contains(target) || _this.navigator.contains(target);
             };
             var _a = this.insertToggleNavigatorIntoDOM(), navigator = _a.navigator, toggle = _a.toggle;
+            this.colors = colors;
             this.navigator = navigator;
             this.toggle = toggle;
         }
@@ -570,7 +582,9 @@
                     _this.annotationManager.startSelectionInteraction();
                 }
             };
-            this.navigatorManager = showNavigator ? new NavigatorManager() : null;
+            this.navigatorManager = showNavigator
+                ? new NavigatorManager(colors)
+                : null;
             this.annotationManager = new AnnotationManager(colors, this.navigatorManager);
             document.addEventListener("mouseup", this.handleSelection);
         }
