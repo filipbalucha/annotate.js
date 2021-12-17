@@ -34,7 +34,6 @@ a:visited {
   height: 1rem;
   margin: 0.5rem;
   padding: 10px;
-  border-radius: 5px;
   width: fit-content;
   border: 1px solid gray;
   text-decoration: none;
@@ -57,12 +56,6 @@ a:visited {
   font-size: 1.5rem;
   padding: 0.25rem;
   font-style: italic;
-}
-
-.use-case {
-  text-align: center;
-  font-size: 1.5rem;
-  padding: 0.25rem;
 }
 
 .long-text {

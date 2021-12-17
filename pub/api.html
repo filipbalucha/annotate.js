@@ -2,21 +2,56 @@
 
 <html>
   <head>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+    <!-- and it's easy to individually load additional languages -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/go.min.js"></script>
+    <script>
+      hljs.highlightAll();
+    </script>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title></title>
     <meta name="description" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="" />
+    <link rel="stylesheet" href="examples.css" />
+    <link rel="stylesheet" href="api.css" />
   </head>
   <body>
-    <!--[if lt IE 7]>
-      <p class="browsehappy">
-        You are using an <strong>outdated</strong> browser. Please
-        <a href="#">upgrade your browser</a> to improve your experience.
-      </p>
-    <![endif]-->
+    <div class="heading">annotate.js</div>
+    <div class="subheading">API & Documentation</div>
+    <div class="category">Getting started</div>
+    <p>
+      To add annotate.js to your library, simply add the following to your
+      JavaScript file:
+    </p>
 
-    <script src="" async defer></script>
+    <div class="code-block">
+      <pre><code class="language-html">
+        &lt;script defer type="text/javascript" src="http://annotatejs.herokuapp.com/js/annotate/annotate.js"&gt;&lt;/script&gt;
+        &lt;link rel="stylesheet" href="http://annotatejs.herokuapp.com/js/annotate/annotate.css"&gt;&lt;/script&gt;
+      </code></pre>
+    </div>
+    <p>Then, initialize annotate.js in a JavaScript file as follows:</p>
+    <div class="code-block">
+      <pre><code class="language-javascript">
+        // Define as many colors as you like
+        const colors = [ "#FFADAD", "#FFD6A5", "#FDFFB6", "#CAFFBF", "#A0C4FF", "#BDB2FF" ];
+        
+        // Decide if the navigator element should be visible
+        const showNavigator = true;
+        
+        new Annotate(colors, showNavigator);
+      </code></pre>
+    </div>
+    This will make annotate.js listen to selections.
+    <div class="category">API</div>
+    Annotate.js was designed to work straight out of the box. The minimalistic
+    API reflects this mantra:
+    <!-- * How to create objects
+    * descriptions of accessible functions (including their arguments, behaviours, and return values if applicable) -->
   </body>
 </html>
