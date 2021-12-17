@@ -255,9 +255,9 @@
       this.insertAnnotationIntoDOM(annotation, range);
       window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
 
-      this.tooltipManager.showDeleteButton(() => {
-        console.log("delete");
-      });
+      this.tooltipManager.showDeleteButton(() =>
+        this.deleteAnnotation(annotation)
+      );
       this.tooltipManager.updateTooltipPosition();
 
       selection.removeAllRanges();
@@ -348,6 +348,7 @@
       delete this.annotations[annotation.id]; // TODO: uncomment!!!
       window.localStorage.removeItem(annotation.id);
       this.removeAnnotationFromDOM(annotation);
+      this.tooltipManager.hideTooltip();
     };
 
     // Methods that work with the DOM:
@@ -468,6 +469,10 @@
       }
 
       this.tooltip.style.transform = `translate(${offsetLeft}px, ${offsetTop}px`;
+    };
+
+    hideTooltip = () => {
+      this.tooltip.style.visibility = "hidden";
     };
 
     showDeleteButton = (callback: () => void): void => {
