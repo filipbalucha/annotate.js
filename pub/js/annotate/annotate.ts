@@ -782,27 +782,26 @@
   window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
 
-// - improve delete button
+// - closing sidebar
 
 // - color picking - allow the end users to select their own highlight color using a color picker
 
 // - webpage
 
-// - move CSS to TS
-
 // - store annotation IDs in a separate entry in local storage to prevent parsing everything - local storage manager???
 
+// future considerations:
+// - cleaner files
+// -> move CSS to TS
+// -> separate files
+// -> compile into a single js file in a separate directory
 // - improve UX:
+//    -> animations
 //    -> freeze selection, make it stay as long as tooltip is open?
 //    -> make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
-
-// in the future:
-// - animations
 // - cleanup
 // -> stop working with regex and use text instead? implement in parallel before removing regex!
-// - test it in an isolated scrollable
-// - add "how it works" to webpage
-// - API - add callbacks? annotation created, changed, ...
+// - extend API - add callbacks? annotation created, changed, ...
 // - selection across nodes
 //    -> would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
 //    -> another problem: span layering -> how to handle what was clicked? What if a highlight is immersed in a large highlight? we'd need to make sure its event listener gets fired

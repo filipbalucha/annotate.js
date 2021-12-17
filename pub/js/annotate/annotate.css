@@ -65,8 +65,10 @@
 
 #__annotate-navigator__ {
   background-color: lightgray;
-  width: 25vw;
-  height: 20vh;
+  width: 18rem;
+  height: 10rem;
+  max-height: 35vh;
+  max-width: 30vw;
 
   position: fixed;
   bottom: 15px;
