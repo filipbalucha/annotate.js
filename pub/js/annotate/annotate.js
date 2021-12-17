@@ -2,12 +2,14 @@
     // Global constants
     var FALLBACK_COLOR_IDX = 0;
     var FALLBACK_COLOR = "yellow";
-    var COLOR_ATTRIBUTE = "annotate-color";
-    var CLASS_HIGHLIGHT = "__annotate-highlight__";
     var ID_TOOLTIP = "__annotate-tooltip__";
-    var CLASS_COLOR_BUTTON = "__annotate-color__";
     var ID_NAVIGATOR = "__annotate-navigator__";
     var ID_TOGGLE = "__annotate-toggle__";
+    var COLOR_ATTRIBUTE = "annotate-color";
+    var CLASS_HIGHLIGHT = "__annotate-highlight__";
+    var CLASS_COLOR_BUTTON = "__annotate-color__";
+    var CLASS_DELETE_BUTTON = "__annotate-delete__";
+    var CLASS_COLOR_ROW = "__annotate-color-row__";
     var Annotation = /** @class */ (function () {
         function Annotation(anchor, anchorOffset, highlightedString, comment) {
             var _this = this;
@@ -280,18 +282,39 @@
     var TooltipManager = /** @class */ (function () {
         function TooltipManager(colors) {
             var _this = this;
+            this.addDeleteButton = function () {
+                var deleteButton = document.createElement("button");
+                deleteButton.id = CLASS_DELETE_BUTTON;
+                deleteButton.style.backgroundColor = "red";
+                _this.tooltip.appendChild(deleteButton);
+            };
             // DOM manipulation:
             this.addColorButtons = function () {
+                var buttons = document.createElement("div");
+                buttons.setAttribute("class", CLASS_COLOR_ROW);
                 for (var i = 0; i < _this.colors.length; i++) {
                     var color = _this.colors[i];
                     var colorButton = document.createElement("button");
                     colorButton.setAttribute("class", CLASS_COLOR_BUTTON);
                     colorButton.setAttribute(COLOR_ATTRIBUTE, "" + i);
                     colorButton.style.backgroundColor = color;
-                    _this.tooltip.appendChild(colorButton);
+                    buttons.appendChild(colorButton);
                 }
+                _this.tooltip.appendChild(buttons);
             };
             this.showTooltip = function (annotation, x, y, lineHeight, updateColor, addAnnotation) {
+                // TODO: only make delete button visible if annotation already exists
+                var highlighted = Boolean(annotation.highlightColor);
+                var deleteButton = document.getElementById(CLASS_DELETE_BUTTON);
+                if (highlighted) {
+                    deleteButton.style.display = "";
+                    deleteButton.onclick = function () {
+                        console.log("joma");
+                    };
+                }
+                else {
+                    deleteButton.style.display = "none";
+                }
                 // Prevent vertical overflow
                 var offsetTop;
                 var tooltipHeight = _this.tooltip.offsetHeight;
@@ -345,6 +368,7 @@
             };
             this.colors = colors;
             this.tooltip = document.getElementById(ID_TOOLTIP);
+            this.addDeleteButton();
             this.addColorButtons();
         }
         return TooltipManager;
@@ -358,7 +382,7 @@
                 var tooltip = document.getElementById(ID_TOOLTIP);
                 var target = event.target;
                 var clickedTooltip = tooltip && tooltip.contains(target);
-                if (clickedTooltip) {
+                if (!clickedTooltip) {
                     document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager
                 }
                 var shouldStartSelectionInteraction = selection.toString().length &&
@@ -399,13 +423,10 @@
 //    -> 1. hoist children: https://stackoverflow.com/questions/1614658/how-do-you-undo-surroundcontents-in-javascript
 //    -> 2. normalize text nodes: https://developer.mozilla.org/en-US/docs/Web/API/Node/normalize
 //    (maybe also consult https://stackoverflow.com/a/57722235)
+// Move CSS to TS
 // - tooltip comments
 // - color picking - allow the end users to select their own highlight color using a color picker
 // - store annotation IDs in a separate entry in local storage to prevent parsing everything
-// - bugs
-// -> tooltip not closing after:
-//    1. clicking elsewhere
-//    2. removing range (might not be a problem, really)
 // - webpage
 // if time:
 // - test it in an isolated scrollable

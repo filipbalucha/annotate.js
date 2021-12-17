@@ -1,16 +1,18 @@
 #__annotate-tooltip__ {
   background-color: lightgray;
-  height: 5vh;
+  height: min-content;
   width: min-content;
   position: absolute;
   inset: 0 0 0 0;
 
+  border: 1px solid gray;
+  border-radius: 5px;
+}
+
+#__annotate-tooltip__ .__annotate-color-row__ {
   display: flex;
   justify-content: center;
   align-items: center;
-
-  border: 1px solid gray;
-  border-radius: 5px;
   padding: 2px;
 }
 
