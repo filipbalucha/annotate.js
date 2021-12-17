@@ -220,17 +220,9 @@
           annotationElements as HTMLCollectionOf<HTMLElement>,
           this.annotations,
           (element: HTMLElement, annotation: Annotation) => {
-            const scrollLeft = document.scrollingElement.scrollLeft;
-            const scrollTop = document.scrollingElement.scrollTop;
-            const x = scrollLeft + element.getBoundingClientRect().x;
-            const y = scrollTop + element.getBoundingClientRect().y;
-            const lineHeight = element.offsetHeight;
-
             this.tooltipManager.showTooltip(
               annotation.comment,
-              x,
-              y,
-              lineHeight,
+              element,
               (color) => this.updateAnnotationColor(annotation, color),
               (comment) => this.updateAnnotationComment(annotation, comment),
               () => this.deleteAnnotation(annotation)
@@ -240,7 +232,6 @@
       }
     };
 
-    // TODO: merge with addannotation somehow?
     loadAnnotationsFromLocalStorage = (): void => {
       for (let i = 0; i < window.localStorage.length; i++) {
         try {
@@ -381,14 +372,9 @@
 
       const annotation = new Annotation(anchor, offset, selection.toString());
 
-      const { x, y, height } = selection.getRangeAt(0).getBoundingClientRect();
-      const scrollTop = document.scrollingElement.scrollTop;
-      const scrollLeft = document.scrollingElement.scrollLeft;
       this.tooltipManager.showTooltip(
         annotation.comment,
-        x + scrollLeft,
-        y + scrollTop,
-        height,
+        selection.getRangeAt(0),
         (color) => this.addAnnotation(annotation, color),
         (comment) => this.updateAnnotationComment(annotation, comment)
       );
@@ -444,17 +430,9 @@
       span.style.backgroundColor = highlightColor || FALLBACK_COLOR;
 
       span.onclick = () => {
-        const scrollLeft = document.scrollingElement.scrollLeft;
-        const scrollTop = document.scrollingElement.scrollTop;
-        const x = scrollLeft + span.getBoundingClientRect().x;
-        const y = scrollTop + span.getBoundingClientRect().y;
-        const lineHeight = span.offsetHeight;
-
         this.tooltipManager.showTooltip(
           annotation.comment,
-          x,
-          y,
-          lineHeight,
+          span,
           (color) => this.updateAnnotationColor(annotation, color),
           (comment) => this.updateAnnotationComment(annotation, comment),
           () => this.deleteAnnotation(annotation)
@@ -552,11 +530,19 @@
       deleteButton.style.display = "none";
     };
 
+    computeAnchorPosition = (anchor: HTMLElement | Range) => {
+      const { scrollLeft, scrollTop } = document.scrollingElement;
+      const { x, y, height } = anchor.getBoundingClientRect();
+      this.anchorPosition = {
+        x: x + scrollLeft,
+        y: y + scrollTop,
+        lineHeight: height,
+      };
+    };
+
     showTooltip = (
       comment: Annotation["comment"],
-      x: number,
-      y: number,
-      lineHeight: number,
+      anchor: HTMLElement | Range,
       selectColorCallback: (string) => void,
       updateCommentCallback: (string) => void,
       deleteAnnotationCallback?: () => void
@@ -567,7 +553,8 @@
         this.hideDeleteButton();
       }
 
-      this.anchorPosition = { x, y, lineHeight };
+      this.computeAnchorPosition(anchor);
+
       this.updateTooltipPosition();
       this.tooltip.style.visibility = "visible";
 

@@ -168,16 +168,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 if (_this.navigatorManager) {
                     var annotationElements = document.getElementsByClassName(AnnotationManager.CLASS_HIGHLIGHT);
                     _this.navigatorManager.update(annotationElements, _this.annotations, function (element, annotation) {
-                        var scrollLeft = document.scrollingElement.scrollLeft;
-                        var scrollTop = document.scrollingElement.scrollTop;
-                        var x = scrollLeft + element.getBoundingClientRect().x;
-                        var y = scrollTop + element.getBoundingClientRect().y;
-                        var lineHeight = element.offsetHeight;
-                        _this.tooltipManager.showTooltip(annotation.comment, x, y, lineHeight, function (color) { return _this.updateAnnotationColor(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); }, function () { return _this.deleteAnnotation(annotation); });
+                        _this.tooltipManager.showTooltip(annotation.comment, element, function (color) { return _this.updateAnnotationColor(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); }, function () { return _this.deleteAnnotation(annotation); });
                     });
                 }
             };
-            // TODO: merge with addannotation somehow?
             this.loadAnnotationsFromLocalStorage = function () {
                 for (var i = 0; i < window.localStorage.length; i++) {
                     try {
@@ -285,10 +279,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 var anchor = leftToRight ? selection.anchorNode : selection.focusNode;
                 var offset = leftToRight ? anchorOffset : focusOffset;
                 var annotation = new Annotation(anchor, offset, selection.toString());
-                var _a = selection.getRangeAt(0).getBoundingClientRect(), x = _a.x, y = _a.y, height = _a.height;
-                var scrollTop = document.scrollingElement.scrollTop;
-                var scrollLeft = document.scrollingElement.scrollLeft;
-                _this.tooltipManager.showTooltip(annotation.comment, x + scrollLeft, y + scrollTop, height, function (color) { return _this.addAnnotation(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); });
+                _this.tooltipManager.showTooltip(annotation.comment, selection.getRangeAt(0), function (color) { return _this.addAnnotation(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); });
             };
             this.deleteAnnotation = function (annotation) {
                 delete _this.annotations[annotation.id];
@@ -331,12 +322,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 span.setAttribute(ATTRIBUTE_ANNOTATION_ID, id);
                 span.style.backgroundColor = highlightColor || FALLBACK_COLOR;
                 span.onclick = function () {
-                    var scrollLeft = document.scrollingElement.scrollLeft;
-                    var scrollTop = document.scrollingElement.scrollTop;
-                    var x = scrollLeft + span.getBoundingClientRect().x;
-                    var y = scrollTop + span.getBoundingClientRect().y;
-                    var lineHeight = span.offsetHeight;
-                    _this.tooltipManager.showTooltip(annotation.comment, x, y, lineHeight, function (color) { return _this.updateAnnotationColor(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); }, function () { return _this.deleteAnnotation(annotation); });
+                    _this.tooltipManager.showTooltip(annotation.comment, span, function (color) { return _this.updateAnnotationColor(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); }, function () { return _this.deleteAnnotation(annotation); });
                 };
                 range.surroundContents(span);
             };
@@ -419,14 +405,23 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 var deleteButton = document.getElementById(ID_DELETE_BUTTON);
                 deleteButton.style.display = "none";
             };
-            this.showTooltip = function (comment, x, y, lineHeight, selectColorCallback, updateCommentCallback, deleteAnnotationCallback) {
+            this.computeAnchorPosition = function (anchor) {
+                var _a = document.scrollingElement, scrollLeft = _a.scrollLeft, scrollTop = _a.scrollTop;
+                var _b = anchor.getBoundingClientRect(), x = _b.x, y = _b.y, height = _b.height;
+                _this.anchorPosition = {
+                    x: x + scrollLeft,
+                    y: y + scrollTop,
+                    lineHeight: height
+                };
+            };
+            this.showTooltip = function (comment, anchor, selectColorCallback, updateCommentCallback, deleteAnnotationCallback) {
                 if (deleteAnnotationCallback) {
                     _this.showDeleteButton(deleteAnnotationCallback);
                 }
                 else {
                     _this.hideDeleteButton();
                 }
-                _this.anchorPosition = { x: x, y: y, lineHeight: lineHeight };
+                _this.computeAnchorPosition(anchor);
                 _this.updateTooltipPosition();
                 _this.tooltip.style.visibility = "visible";
                 // Add comment to comment area
