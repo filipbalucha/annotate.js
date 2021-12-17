@@ -503,27 +503,38 @@
   window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
 
+// TODOs:
+// - delete
+//    -> 1. hoist children: https://stackoverflow.com/questions/1614658/how-do-you-undo-surroundcontents-in-javascript
+//    -> 2. normalize text nodes: https://developer.mozilla.org/en-US/docs/Web/API/Node/normalize
+//    (maybe also consult https://stackoverflow.com/a/57722235)
+
+// - tooltip comments
+
+// - color picking - allow the end users to select their own highlight color using a color picker
+
+// - store annotation IDs in a separate entry in local storage to prevent parsing everything
+
 // - bugs
 // -> tooltip not closing after:
 //    1. clicking elsewhere
-//    2. removing range
+//    2. removing range (might not be a problem, really)
+
+// - webpage
+
+// if time:
+// - test it in an isolated scrollable
+// - add "how it works" to webpage
+// - API - add callbacks? annotation created, changed, ...
 
 // - cleanup
 // -> stop working with regex and use text instead? implement in parallel before removing regex!
 
-// - tooltip comments
-// - tooltip delete button
-//    -> 1. hoist children: https://stackoverflow.com/questions/1614658/how-do-you-undo-surroundcontents-in-javascript
-//    -> 2. normalize text nodes: https://developer.mozilla.org/en-US/docs/Web/API/Node/normalize
-//    (maybe also consult https://stackoverflow.com/a/57722235)
-// - test it in an isolated scrollable
 // - improve UX:
 //    -> freeze selection, make it stay as long as tooltip is open?
 //    -> animations
 //    -> make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
-// - both students recommended:
-//   -> allow the end users to select their own highlight color using a color picker
+
 // - selection across nodes
 //    -> would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
 //    -> another problem: span layering -> how to handle what was clicked? What if a highlight is immersed in a large highlight? we'd need to make sure its event listener gets fired
-// - store annotation IDs in a separate entry in local storage to prevent parsing everything
