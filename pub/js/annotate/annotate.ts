@@ -11,8 +11,6 @@
   const CLASS_COLOR_ROW = "__annotate-color-row__";
   const ATTRIBUTE_ANNOTATION_ID = "annotate-id";
 
-  // Data
-
   type Tag = string;
   type ChildIndex = number;
   type Path = [Tag, ChildIndex][];
@@ -617,6 +615,11 @@
       cards.scrollTop = prevScrollTop;
     };
 
+    collapseNavigator = (): void => {
+      this.navigator.style.visibility = "hidden";
+      this.toggle.style.visibility = "visible";
+    };
+
     colorFilter = (
       sortedAnnotations: HTMLCollectionOf<Element>,
       annotationDetails: AnnotationManager["annotations"]
@@ -711,10 +714,6 @@
     } => {
       const navigator = document.createElement("div");
       navigator.id = NavigatorManager.ID_NAVIGATOR;
-      // navigator.onclick = () => {
-      //   navigator.style.visibility = "hidden";
-      //   toggle.style.visibility = "visible";
-      // };
 
       const toggle = document.createElement("div");
       toggle.id = NavigatorManager.ID_TOGGLE;
@@ -747,10 +746,10 @@
         colors,
         this.navigatorManager
       );
-      document.addEventListener("mouseup", this.handleSelection);
+      document.addEventListener("mouseup", this.handleMouseUp);
     }
 
-    handleSelection = (event: MouseEvent): void => {
+    handleMouseUp = (event: MouseEvent): void => {
       const selection = window.getSelection();
       const { anchorNode, focusNode } = selection;
 
@@ -758,6 +757,8 @@
       const clickedNavigator = this.navigatorManager?.wasClicked(target);
       if (clickedNavigator) {
         return;
+      } else {
+        this.navigatorManager?.collapseNavigator();
       }
 
       const tooltip = document.getElementById(ID_TOOLTIP);
@@ -783,10 +784,14 @@
 })(window, window.document);
 
 // - closing sidebar
+// - open annotation on click
 
 // - color picking - allow the end users to select their own highlight color using a color picker
 
+// - remove todos, remove comments
+
 // - webpage
+// - README
 
 // - store annotation IDs in a separate entry in local storage to prevent parsing everything - local storage manager???
 

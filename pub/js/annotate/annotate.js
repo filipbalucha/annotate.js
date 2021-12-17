@@ -465,6 +465,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 _this.navigator.appendChild(cards);
                 cards.scrollTop = prevScrollTop;
             };
+            this.collapseNavigator = function () {
+                _this.navigator.style.visibility = "hidden";
+                _this.toggle.style.visibility = "visible";
+            };
             this.colorFilter = function (sortedAnnotations, annotationDetails) {
                 var colorFilter = document.createElement("div");
                 colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
@@ -541,10 +545,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             this.insertToggleNavigatorIntoDOM = function () {
                 var navigator = document.createElement("div");
                 navigator.id = NavigatorManager.ID_NAVIGATOR;
-                // navigator.onclick = () => {
-                //   navigator.style.visibility = "hidden";
-                //   toggle.style.visibility = "visible";
-                // };
                 var toggle = document.createElement("div");
                 toggle.id = NavigatorManager.ID_TOGGLE;
                 toggle.textContent = "a";
@@ -575,14 +575,17 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     var Annotate = /** @class */ (function () {
         function Annotate(colors, showNavigator) {
             var _this = this;
-            this.handleSelection = function (event) {
-                var _a;
+            this.handleMouseUp = function (event) {
+                var _a, _b;
                 var selection = window.getSelection();
                 var anchorNode = selection.anchorNode, focusNode = selection.focusNode;
                 var target = event.target;
                 var clickedNavigator = (_a = _this.navigatorManager) === null || _a === void 0 ? void 0 : _a.wasClicked(target);
                 if (clickedNavigator) {
                     return;
+                }
+                else {
+                    (_b = _this.navigatorManager) === null || _b === void 0 ? void 0 : _b.collapseNavigator();
                 }
                 var tooltip = document.getElementById(ID_TOOLTIP);
                 var clickedTooltip = tooltip && tooltip.contains(target);
@@ -601,7 +604,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 ? new NavigatorManager(colors)
                 : null;
             this.annotationManager = new AnnotationManager(colors, this.navigatorManager);
-            document.addEventListener("mouseup", this.handleSelection);
+            document.addEventListener("mouseup", this.handleMouseUp);
         }
         return Annotate;
     }());
@@ -609,8 +612,11 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
 // - closing sidebar
+// - open annotation on click
 // - color picking - allow the end users to select their own highlight color using a color picker
+// - remove todos, remove comments
 // - webpage
+// - README
 // - store annotation IDs in a separate entry in local storage to prevent parsing everything - local storage manager???
 // future considerations:
 // - cleaner files
