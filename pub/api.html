@@ -23,6 +23,7 @@
   <body>
     <div class="heading">annotate.js</div>
     <div class="subheading">API & Documentation</div>
+    <br />
     <div class="category">Getting started</div>
     <p>
       To add annotate.js to your library, simply add the following to your
@@ -31,27 +32,59 @@
 
     <div class="code-block">
       <pre><code class="language-html">
-        &lt;script defer type="text/javascript" src="http://annotatejs.herokuapp.com/js/annotate/annotate.js"&gt;&lt;/script&gt;
-        &lt;link rel="stylesheet" href="http://annotatejs.herokuapp.com/js/annotate/annotate.css"&gt;&lt;/script&gt;
+&lt;script defer type="text/javascript" src="http://annotatejs.herokuapp.com/js/annotate/annotate.js"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="http://annotatejs.herokuapp.com/js/annotate/annotate.css"&gt;&lt;/script&gt;
       </code></pre>
     </div>
     <p>Then, initialize annotate.js in a JavaScript file as follows:</p>
     <div class="code-block">
       <pre><code class="language-javascript">
-        // Define as many colors as you like
-        const colors = [ "#FFADAD", "#FFD6A5", "#FDFFB6", "#CAFFBF", "#A0C4FF", "#BDB2FF" ];
+// Define as many colors as you like
+const colors = [ "#FFADAD", "#FFD6A5", "#FDFFB6", "#CAFFBF", "#A0C4FF", "#BDB2FF" ];
         
-        // Decide if the navigator element should be visible
-        const showNavigator = true;
+// Decide if the navigator element should be visible
+const showNavigator = true;
         
-        new Annotate(colors, showNavigator);
+new Annotate(colors, showNavigator);
       </code></pre>
     </div>
-    This will make annotate.js listen to selections.
+    <p>This will make annotate.js listen to selections.</p>
+    <br />
     <div class="category">API</div>
-    Annotate.js was designed to work straight out of the box. The minimalistic
-    API reflects this mantra:
+    <p>
+      Annotate.js was designed to work straight out of the box. Its minimalistic
+      API reflects this mantra:
+    </p>
+
     <!-- * How to create objects
     * descriptions of accessible functions (including their arguments, behaviours, and return values if applicable) -->
+
+    <table class="api-table">
+      <tr>
+        <th class="table-caption" colspan="4">The Annotate constructor:</th>
+      </tr>
+      <tr>
+        <th>Property</th>
+        <th>Default</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td>colors</td>
+        <td>['yellow']</td>
+        <td>string[]<br />(any string that is a valid CSS color)</td>
+        <td>The highlight colors offered to the user.</td>
+      </tr>
+      <tr>
+        <td>showNavigator</td>
+        <td>–</td>
+        <td>boolean</td>
+        <td>Should the navigator element be displayed?</td>
+      </tr>
+    </table>
+
+    <br />
+    <br />
+    <a href="." class="button"> Home page </a>
   </body>
 </html>

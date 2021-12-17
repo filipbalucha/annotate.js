@@ -18,3 +18,23 @@ code {
   border: 1px solid gray;
   width: 90%;
 }
+
+.api-table {
+  border: 1px solid gray;
+  width: 90%;
+}
+
+.api-table .table-caption {
+  padding: 5px;
+  text-align: center;
+  border-bottom: 1px solid gray;
+}
+
+.api-table td {
+  padding: 5px;
+  text-align: center;
+}
+
+.api-table td:nth-child(2) {
+  font-family: Consolas, "courier new";
+}
