@@ -216,7 +216,27 @@
         const annotationElements = document.getElementsByClassName(
           AnnotationManager.CLASS_HIGHLIGHT
         );
-        this.navigatorManager.update(annotationElements, this.annotations);
+        this.navigatorManager.update(
+          annotationElements as HTMLCollectionOf<HTMLElement>,
+          this.annotations,
+          (element: HTMLElement, annotation: Annotation) => {
+            const scrollLeft = document.scrollingElement.scrollLeft;
+            const scrollTop = document.scrollingElement.scrollTop;
+            const x = scrollLeft + element.getBoundingClientRect().x;
+            const y = scrollTop + element.getBoundingClientRect().y;
+            const lineHeight = element.offsetHeight;
+
+            this.tooltipManager.showTooltip(
+              annotation.comment,
+              x,
+              y,
+              lineHeight,
+              (color) => this.updateAnnotationColor(annotation, color),
+              (comment) => this.updateAnnotationComment(annotation, comment),
+              () => this.deleteAnnotation(annotation)
+            );
+          }
+        );
       }
     };
 
@@ -599,17 +619,29 @@
 
     // Methods that manipulate the DOM:
     update = (
-      sortedAnnotations: HTMLCollectionOf<Element>,
-      annotationDetails: AnnotationManager["annotations"]
+      sortedAnnotations: HTMLCollectionOf<HTMLElement>,
+      annotationDetails: AnnotationManager["annotations"],
+      annotationCardClickedCallback: (
+        element: HTMLElement,
+        annotation: Annotation
+      ) => void
     ): void => {
       const prevScrollTop = this.scrollTop();
 
       this.navigator.replaceChildren();
 
-      const filter = this.colorFilter(sortedAnnotations, annotationDetails);
+      const filter = this.colorFilter(
+        sortedAnnotations,
+        annotationDetails,
+        annotationCardClickedCallback
+      );
       this.navigator.appendChild(filter);
 
-      const cards = this.annotationCards(sortedAnnotations, annotationDetails);
+      const cards = this.annotationCards(
+        sortedAnnotations,
+        annotationDetails,
+        annotationCardClickedCallback
+      );
       this.navigator.appendChild(cards);
 
       cards.scrollTop = prevScrollTop;
@@ -621,8 +653,12 @@
     };
 
     colorFilter = (
-      sortedAnnotations: HTMLCollectionOf<Element>,
-      annotationDetails: AnnotationManager["annotations"]
+      sortedAnnotations: HTMLCollectionOf<HTMLElement>,
+      annotationDetails: AnnotationManager["annotations"],
+      annotationCardClickedCallback: (
+        element: HTMLElement,
+        annotation: Annotation
+      ) => void
     ): HTMLDivElement => {
       const colorFilter = document.createElement("div");
       colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
@@ -651,7 +687,11 @@
           } else {
             this.filterColor = color;
           }
-          this.update(sortedAnnotations, annotationDetails);
+          this.update(
+            sortedAnnotations,
+            annotationDetails,
+            annotationCardClickedCallback
+          );
         };
         colorFilter.appendChild(colorButton);
       });
@@ -659,8 +699,12 @@
     };
 
     annotationCards = (
-      sortedAnnotations: HTMLCollectionOf<Element>,
-      annotationDetails: AnnotationManager["annotations"]
+      sortedAnnotations: HTMLCollectionOf<HTMLElement>,
+      annotationDetails: AnnotationManager["annotations"],
+      annotationCardClickedCallback: (
+        element: HTMLElement,
+        annotation: Annotation
+      ) => void
     ): HTMLDivElement => {
       const cards = document.createElement("div");
       cards.id = NavigatorManager.CLASS_NAVIGATOR_CARDS;
@@ -669,33 +713,33 @@
       for (let i = 0; i < sortedAnnotations.length; i++) {
         const annotationElement = sortedAnnotations[i];
         const id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
+        const annotation = annotationDetails[id];
 
         if (
           this.filterColor &&
-          annotationDetails[id].highlightColor !== this.filterColor
+          annotation.highlightColor !== this.filterColor
         ) {
           continue;
         }
 
-        const { comment, highlightedString, highlightColor } =
-          annotationDetails[id];
+        const { comment, highlightColor } = annotation;
         const card = document.createElement("div");
         card.style.backgroundColor = highlightColor;
         card.className = NavigatorManager.CLASS_NAVIGATOR_CARD;
         if (comment) {
           card.innerText = comment.substring(0, 20);
-        } else if (highlightedString.match(/\s+/)) {
-          card.innerText = "empty";
-          card.style.fontStyle = "italic";
         } else {
-          card.innerText = highlightedString;
+          card.style.fontStyle = "italic";
+          card.innerText = `"${annotation.highlightedString}"`;
         }
 
-        card.onclick = () =>
+        card.onclick = () => {
           annotationElement.scrollIntoView({
             behavior: "smooth",
             block: "center",
           });
+          annotationCardClickedCallback(annotationElement, annotation);
+        };
         cards.appendChild(card);
       }
       return cards;
@@ -782,9 +826,6 @@
   // Make Annotate globally accessible
   window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
-
-// - closing sidebar
-// - open annotation on click
 
 // - color picking - allow the end users to select their own highlight color using a color picker
 

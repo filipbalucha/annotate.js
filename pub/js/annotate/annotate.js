@@ -167,7 +167,14 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             this.updateNavigator = function () {
                 if (_this.navigatorManager) {
                     var annotationElements = document.getElementsByClassName(AnnotationManager.CLASS_HIGHLIGHT);
-                    _this.navigatorManager.update(annotationElements, _this.annotations);
+                    _this.navigatorManager.update(annotationElements, _this.annotations, function (element, annotation) {
+                        var scrollLeft = document.scrollingElement.scrollLeft;
+                        var scrollTop = document.scrollingElement.scrollTop;
+                        var x = scrollLeft + element.getBoundingClientRect().x;
+                        var y = scrollTop + element.getBoundingClientRect().y;
+                        var lineHeight = element.offsetHeight;
+                        _this.tooltipManager.showTooltip(annotation.comment, x, y, lineHeight, function (color) { return _this.updateAnnotationColor(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); }, function () { return _this.deleteAnnotation(annotation); });
+                    });
                 }
             };
             // TODO: merge with addannotation somehow?
@@ -456,12 +463,12 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
         function NavigatorManager(colors) {
             var _this = this;
             // Methods that manipulate the DOM:
-            this.update = function (sortedAnnotations, annotationDetails) {
+            this.update = function (sortedAnnotations, annotationDetails, annotationCardClickedCallback) {
                 var prevScrollTop = _this.scrollTop();
                 _this.navigator.replaceChildren();
-                var filter = _this.colorFilter(sortedAnnotations, annotationDetails);
+                var filter = _this.colorFilter(sortedAnnotations, annotationDetails, annotationCardClickedCallback);
                 _this.navigator.appendChild(filter);
-                var cards = _this.annotationCards(sortedAnnotations, annotationDetails);
+                var cards = _this.annotationCards(sortedAnnotations, annotationDetails, annotationCardClickedCallback);
                 _this.navigator.appendChild(cards);
                 cards.scrollTop = prevScrollTop;
             };
@@ -469,7 +476,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 _this.navigator.style.visibility = "hidden";
                 _this.toggle.style.visibility = "visible";
             };
-            this.colorFilter = function (sortedAnnotations, annotationDetails) {
+            this.colorFilter = function (sortedAnnotations, annotationDetails, annotationCardClickedCallback) {
                 var colorFilter = document.createElement("div");
                 colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
                 var uniqueColors = new Set();
@@ -494,42 +501,41 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                         else {
                             _this.filterColor = color;
                         }
-                        _this.update(sortedAnnotations, annotationDetails);
+                        _this.update(sortedAnnotations, annotationDetails, annotationCardClickedCallback);
                     };
                     colorFilter.appendChild(colorButton);
                 });
                 return colorFilter;
             };
-            this.annotationCards = function (sortedAnnotations, annotationDetails) {
+            this.annotationCards = function (sortedAnnotations, annotationDetails, annotationCardClickedCallback) {
                 var cards = document.createElement("div");
                 cards.id = NavigatorManager.CLASS_NAVIGATOR_CARDS;
                 cards.style.overflow = "auto";
                 var _loop_2 = function (i) {
                     var annotationElement = sortedAnnotations[i];
                     var id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
+                    var annotation = annotationDetails[id];
                     if (_this.filterColor &&
-                        annotationDetails[id].highlightColor !== _this.filterColor) {
+                        annotation.highlightColor !== _this.filterColor) {
                         return "continue";
                     }
-                    var _a = annotationDetails[id], comment = _a.comment, highlightedString = _a.highlightedString, highlightColor = _a.highlightColor;
+                    var comment = annotation.comment, highlightColor = annotation.highlightColor;
                     var card = document.createElement("div");
                     card.style.backgroundColor = highlightColor;
                     card.className = NavigatorManager.CLASS_NAVIGATOR_CARD;
                     if (comment) {
                         card.innerText = comment.substring(0, 20);
                     }
-                    else if (highlightedString.match(/\s+/)) {
-                        card.innerText = "empty";
-                        card.style.fontStyle = "italic";
-                    }
                     else {
-                        card.innerText = highlightedString;
+                        card.style.fontStyle = "italic";
+                        card.innerText = "\"".concat(annotation.highlightedString, "\"");
                     }
                     card.onclick = function () {
-                        return annotationElement.scrollIntoView({
+                        annotationElement.scrollIntoView({
                             behavior: "smooth",
                             block: "center"
                         });
+                        annotationCardClickedCallback(annotationElement, annotation);
                     };
                     cards.appendChild(card);
                 };
@@ -611,8 +617,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     // Make Annotate globally accessible
     window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
-// - closing sidebar
-// - open annotation on click
 // - color picking - allow the end users to select their own highlight color using a color picker
 // - remove todos, remove comments
 // - webpage
