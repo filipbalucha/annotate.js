@@ -6,9 +6,9 @@
     var ID_NAVIGATOR = "__annotate-navigator__";
     var ID_TOGGLE = "__annotate-toggle__";
     var COLOR_ATTRIBUTE = "annotate-color";
+    var ID_DELETE_BUTTON = "__annotate-delete__";
     var CLASS_HIGHLIGHT = "__annotate-highlight__";
     var CLASS_COLOR_BUTTON = "__annotate-color__";
-    var CLASS_DELETE_BUTTON = "__annotate-delete__";
     var CLASS_COLOR_ROW = "__annotate-color-row__";
     var Annotation = /** @class */ (function () {
         function Annotation(anchor, anchorOffset, highlightedString, comment) {
@@ -284,7 +284,7 @@
             var _this = this;
             this.addDeleteButton = function () {
                 var deleteButton = document.createElement("button");
-                deleteButton.id = CLASS_DELETE_BUTTON;
+                deleteButton.id = ID_DELETE_BUTTON;
                 deleteButton.style.backgroundColor = "red";
                 _this.tooltip.appendChild(deleteButton);
             };
@@ -305,7 +305,7 @@
             this.showTooltip = function (annotation, x, y, lineHeight, updateColor, addAnnotation) {
                 // TODO: only make delete button visible if annotation already exists
                 var highlighted = Boolean(annotation.highlightColor);
-                var deleteButton = document.getElementById(CLASS_DELETE_BUTTON);
+                var deleteButton = document.getElementById(ID_DELETE_BUTTON);
                 if (highlighted) {
                     deleteButton.style.display = "";
                     deleteButton.onclick = function () {

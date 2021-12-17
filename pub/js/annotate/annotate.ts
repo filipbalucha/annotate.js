@@ -6,9 +6,9 @@
   const ID_NAVIGATOR = "__annotate-navigator__";
   const ID_TOGGLE = "__annotate-toggle__";
   const COLOR_ATTRIBUTE = "annotate-color";
+  const ID_DELETE_BUTTON = "__annotate-delete__";
   const CLASS_HIGHLIGHT = "__annotate-highlight__";
   const CLASS_COLOR_BUTTON = "__annotate-color__";
-  const CLASS_DELETE_BUTTON = "__annotate-delete__";
   const CLASS_COLOR_ROW = "__annotate-color-row__";
 
   // Data
@@ -381,7 +381,7 @@
 
     addDeleteButton = (): void => {
       const deleteButton = document.createElement("button");
-      deleteButton.id = CLASS_DELETE_BUTTON;
+      deleteButton.id = ID_DELETE_BUTTON;
       deleteButton.style.backgroundColor = "red";
       this.tooltip.appendChild(deleteButton);
     };
@@ -411,7 +411,7 @@
     ) => {
       // TODO: only make delete button visible if annotation already exists
       const highlighted = Boolean(annotation.highlightColor);
-      const deleteButton = document.getElementById(CLASS_DELETE_BUTTON);
+      const deleteButton = document.getElementById(ID_DELETE_BUTTON);
       if (highlighted) {
         deleteButton.style.display = "";
         deleteButton.onclick = () => {
