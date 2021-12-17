@@ -456,8 +456,15 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             var _this = this;
             // Methods that manipulate the DOM:
             this.update = function (sortedAnnotations, annotationDetails) {
+                var prevScrollTop = _this.scrollTop();
                 _this.navigator.replaceChildren();
-                // Add filter
+                var filter = _this.colorFilter(sortedAnnotations, annotationDetails);
+                _this.navigator.appendChild(filter);
+                var cards = _this.annotationCards(sortedAnnotations, annotationDetails);
+                _this.navigator.appendChild(cards);
+                cards.scrollTop = prevScrollTop;
+            };
+            this.colorFilter = function (sortedAnnotations, annotationDetails) {
                 var colorFilter = document.createElement("div");
                 colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
                 var uniqueColors = new Set();
@@ -486,9 +493,11 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                     };
                     colorFilter.appendChild(colorButton);
                 });
-                _this.navigator.appendChild(colorFilter);
-                // Add annotation cards
+                return colorFilter;
+            };
+            this.annotationCards = function (sortedAnnotations, annotationDetails) {
                 var cards = document.createElement("div");
+                cards.id = NavigatorManager.CLASS_NAVIGATOR_CARDS;
                 cards.style.overflow = "auto";
                 var _loop_2 = function (i) {
                     var annotationElement = sortedAnnotations[i];
@@ -522,7 +531,11 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 for (var i = 0; i < sortedAnnotations.length; i++) {
                     _loop_2(i);
                 }
-                _this.navigator.appendChild(cards);
+                return cards;
+            };
+            this.scrollTop = function () {
+                var prevCards = document.getElementById(NavigatorManager.CLASS_NAVIGATOR_CARDS);
+                return prevCards ? prevCards.scrollTop : 0;
             };
             this.insertToggleNavigatorIntoDOM = function () {
                 var navigator = document.createElement("div");
@@ -553,6 +566,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
         NavigatorManager.ID_NAVIGATOR = "__annotate-navigator__";
         NavigatorManager.ID_TOGGLE = "__annotate-toggle__";
         NavigatorManager.CLASS_NAVIGATOR_CARD = "__annotate-navigator__card__";
+        NavigatorManager.CLASS_NAVIGATOR_CARDS = "__annotate-navigator__cards__";
         NavigatorManager.CLASS_COLOR_ROW = "__annotate-filter__";
         NavigatorManager.CLASS_COLOR_BUTTON = "__annotate-filter-color__";
         return NavigatorManager;

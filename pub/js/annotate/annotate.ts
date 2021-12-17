@@ -581,6 +581,7 @@
     static readonly ID_NAVIGATOR = "__annotate-navigator__";
     static readonly ID_TOGGLE = "__annotate-toggle__";
     static readonly CLASS_NAVIGATOR_CARD = "__annotate-navigator__card__";
+    static readonly CLASS_NAVIGATOR_CARDS = "__annotate-navigator__cards__";
     static readonly CLASS_COLOR_ROW = "__annotate-filter__";
     static readonly CLASS_COLOR_BUTTON = "__annotate-filter-color__";
 
@@ -601,9 +602,23 @@
       sortedAnnotations: HTMLCollectionOf<Element>,
       annotationDetails: AnnotationManager["annotations"]
     ): void => {
+      const prevScrollTop = this.scrollTop();
+
       this.navigator.replaceChildren();
 
-      // Add filter
+      const filter = this.colorFilter(sortedAnnotations, annotationDetails);
+      this.navigator.appendChild(filter);
+
+      const cards = this.annotationCards(sortedAnnotations, annotationDetails);
+      this.navigator.appendChild(cards);
+
+      cards.scrollTop = prevScrollTop;
+    };
+
+    colorFilter = (
+      sortedAnnotations: HTMLCollectionOf<Element>,
+      annotationDetails: AnnotationManager["annotations"]
+    ): HTMLDivElement => {
       const colorFilter = document.createElement("div");
       colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
       const uniqueColors = new Set<Annotation["highlightColor"]>();
@@ -635,12 +650,17 @@
         };
         colorFilter.appendChild(colorButton);
       });
+      return colorFilter;
+    };
 
-      this.navigator.appendChild(colorFilter);
-
-      // Add annotation cards
+    annotationCards = (
+      sortedAnnotations: HTMLCollectionOf<Element>,
+      annotationDetails: AnnotationManager["annotations"]
+    ): HTMLDivElement => {
       const cards = document.createElement("div");
+      cards.id = NavigatorManager.CLASS_NAVIGATOR_CARDS;
       cards.style.overflow = "auto";
+
       for (let i = 0; i < sortedAnnotations.length; i++) {
         const annotationElement = sortedAnnotations[i];
         const id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
@@ -673,7 +693,14 @@
           });
         cards.appendChild(card);
       }
-      this.navigator.appendChild(cards);
+      return cards;
+    };
+
+    scrollTop = (): number => {
+      const prevCards = document.getElementById(
+        NavigatorManager.CLASS_NAVIGATOR_CARDS
+      );
+      return prevCards ? prevCards.scrollTop : 0;
     };
 
     insertToggleNavigatorIntoDOM = (): {
