@@ -4,9 +4,10 @@
     var FALLBACK_COLOR = "yellow";
     var ID_TOOLTIP = "__annotate-tooltip__";
     var ID_NAVIGATOR = "__annotate-navigator__";
+    var ID_COMMENT = "__annotate-comment__";
+    var ID_DELETE_BUTTON = "__annotate-delete__";
     var ID_TOGGLE = "__annotate-toggle__";
     var COLOR_ATTRIBUTE = "annotate-color";
-    var ID_DELETE_BUTTON = "__annotate-delete__";
     var CLASS_HIGHLIGHT = "__annotate-highlight__";
     var CLASS_COLOR_BUTTON = "__annotate-color__";
     var CLASS_COLOR_ROW = "__annotate-color-row__";
@@ -237,6 +238,10 @@
                 }
                 return node;
             };
+            this.updateAnnotationComment = function (annotation, newComment) {
+                annotation.comment = newComment;
+                window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
+            };
             this.startSelectionInteraction = function () {
                 var selection = window.getSelection();
                 var anchorOffset = selection.anchorOffset, focusOffset = selection.focusOffset;
@@ -248,7 +253,7 @@
                 var _a = selection.getRangeAt(0).getBoundingClientRect(), x = _a.x, y = _a.y, height = _a.height;
                 var scrollTop = document.scrollingElement.scrollTop;
                 var scrollLeft = document.scrollingElement.scrollLeft;
-                _this.tooltipManager.showTooltip(annotation, x + scrollLeft, y + scrollTop, height, _this.updateColor, _this.addAnnotation);
+                _this.tooltipManager.showTooltip(annotation, x + scrollLeft, y + scrollTop, height, _this.updateColor, _this.addAnnotation, function (comment) { return _this.updateAnnotationComment(annotation, comment); });
             };
             // Functions that manipulate the DOM
             this.updateColor = function (annotation, newColor) {
@@ -302,7 +307,7 @@
                     var x = scrollLeft + span.getBoundingClientRect().x;
                     var y = scrollTop + span.getBoundingClientRect().y;
                     var lineHeight = span.offsetHeight;
-                    _this.tooltipManager.showTooltip(annotation, x, y, lineHeight, _this.updateColor, _this.addAnnotation, function () { return _this.deleteAnnotation(annotation); });
+                    _this.tooltipManager.showTooltip(annotation, x, y, lineHeight, _this.updateColor, _this.addAnnotation, function (comment) { return _this.updateAnnotationComment(annotation, comment); }, function () { return _this.deleteAnnotation(annotation); });
                 };
                 range.surroundContents(span);
             };
@@ -335,6 +340,12 @@
                     buttons.appendChild(colorButton);
                 }
                 _this.tooltip.appendChild(buttons);
+            };
+            this.addCommentArea = function () {
+                var commentArea = document.createElement("textarea");
+                commentArea.id = ID_COMMENT;
+                commentArea.placeholder = "Type a comment...";
+                _this.tooltip.appendChild(commentArea);
             };
             this.updateTooltipPosition = function () {
                 var _a = _this.anchorPosition, x = _a.x, y = _a.y, lineHeight = _a.lineHeight;
@@ -377,7 +388,7 @@
             };
             this.showTooltip = function (annotation, x, y, lineHeight, 
             // TODO: use a single callback
-            updateColor, addAnnotation, deleteAnnotationCallback) {
+            updateColor, addAnnotation, updateCommentCallback, deleteAnnotationCallback) {
                 if (deleteAnnotationCallback) {
                     _this.showDeleteButton(deleteAnnotationCallback);
                 }
@@ -387,6 +398,12 @@
                 _this.anchorPosition = { x: x, y: y, lineHeight: lineHeight };
                 _this.updateTooltipPosition();
                 _this.tooltip.style.visibility = "visible";
+                // Add comment to comment area
+                var commentArea = document.getElementById(ID_COMMENT);
+                commentArea.value = annotation.comment || "";
+                commentArea.onchange = function (e) {
+                    updateCommentCallback(e.target.value);
+                };
                 // Bind actions to tooltip color buttons
                 var colorButtons = _this.tooltip.getElementsByClassName(CLASS_COLOR_BUTTON);
                 var _loop_1 = function (i) {
@@ -416,6 +433,7 @@
             this.colors = colors;
             this.tooltip = document.getElementById(ID_TOOLTIP);
             this.addDeleteButton();
+            this.addCommentArea();
             this.addColorButtons();
         }
         return TooltipManager;
@@ -465,15 +483,11 @@
     // Make Annotate globally accessible
     window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
-// TODOs:
-// - delete
-//    -> 1. hoist children: https://stackoverflow.com/questions/1614658/how-do-you-undo-surroundcontents-in-javascript
-//    -> 2. normalize text nodes: https://developer.mozilla.org/en-US/docs/Web/API/Node/normalize
-//    (maybe also consult https://stackoverflow.com/a/57722235)
-// Move CSS to TS
-// - tooltip comments
+// - overview element!!!
+// - bug: annotating spaces - this is due to using regex, not doing should resolve the issue
 // - color picking - allow the end users to select their own highlight color using a color picker
-// - store annotation IDs in a separate entry in local storage to prevent parsing everything
+// - move CSS to TS
+// - store annotation IDs in a separate entry in local storage to prevent parsing everything - local storage manager???
 // - webpage
 // if time:
 // - test it in an isolated scrollable

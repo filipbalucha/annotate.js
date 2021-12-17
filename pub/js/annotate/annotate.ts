@@ -4,9 +4,10 @@
   const FALLBACK_COLOR: Color = "yellow";
   const ID_TOOLTIP = "__annotate-tooltip__";
   const ID_NAVIGATOR = "__annotate-navigator__";
+  const ID_COMMENT = "__annotate-comment__";
+  const ID_DELETE_BUTTON = "__annotate-delete__";
   const ID_TOGGLE = "__annotate-toggle__";
   const COLOR_ATTRIBUTE = "annotate-color";
-  const ID_DELETE_BUTTON = "__annotate-delete__";
   const CLASS_HIGHLIGHT = "__annotate-highlight__";
   const CLASS_COLOR_BUTTON = "__annotate-color__";
   const CLASS_COLOR_ROW = "__annotate-color-row__";
@@ -309,6 +310,14 @@
       return node as Element;
     };
 
+    updateAnnotationComment = (
+      annotation: Annotation,
+      newComment: Annotation["comment"]
+    ) => {
+      annotation.comment = newComment;
+      window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
+    };
+
     startSelectionInteraction = () => {
       const selection = window.getSelection();
       const { anchorOffset, focusOffset } = selection;
@@ -329,7 +338,8 @@
         y + scrollTop,
         height,
         this.updateColor,
-        this.addAnnotation
+        this.addAnnotation,
+        (comment) => this.updateAnnotationComment(annotation, comment)
       );
     };
 
@@ -401,6 +411,7 @@
           lineHeight,
           this.updateColor,
           this.addAnnotation,
+          (comment) => this.updateAnnotationComment(annotation, comment),
           () => this.deleteAnnotation(annotation)
         );
       };
@@ -418,6 +429,7 @@
       this.colors = colors;
       this.tooltip = document.getElementById(ID_TOOLTIP);
       this.addDeleteButton();
+      this.addCommentArea();
       this.addColorButtons();
     }
 
@@ -441,6 +453,13 @@
         buttons.appendChild(colorButton);
       }
       this.tooltip.appendChild(buttons);
+    };
+
+    addCommentArea = (): void => {
+      const commentArea = document.createElement("textarea");
+      commentArea.id = ID_COMMENT;
+      commentArea.placeholder = "Type a comment...";
+      this.tooltip.appendChild(commentArea);
     };
 
     updateTooltipPosition = () => {
@@ -494,6 +513,7 @@
       // TODO: use a single callback
       updateColor: (Annotation, Color) => void,
       addAnnotation: (Annotation, Color) => void,
+      updateCommentCallback: (string) => void,
       deleteAnnotationCallback?: () => void
     ) => {
       if (deleteAnnotationCallback) {
@@ -505,6 +525,15 @@
       this.anchorPosition = { x, y, lineHeight };
       this.updateTooltipPosition();
       this.tooltip.style.visibility = "visible";
+
+      // Add comment to comment area
+      const commentArea = document.getElementById(
+        ID_COMMENT
+      ) as HTMLInputElement;
+      commentArea.value = annotation.comment || "";
+      commentArea.onchange = (e: Event) => {
+        updateCommentCallback((e.target as HTMLInputElement).value);
+      };
 
       // Bind actions to tooltip color buttons
       const colorButtons =
@@ -587,19 +616,15 @@
   window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
 
-// TODOs:
-// - delete
-//    -> 1. hoist children: https://stackoverflow.com/questions/1614658/how-do-you-undo-surroundcontents-in-javascript
-//    -> 2. normalize text nodes: https://developer.mozilla.org/en-US/docs/Web/API/Node/normalize
-//    (maybe also consult https://stackoverflow.com/a/57722235)
+// - overview element!!!
 
-// Move CSS to TS
-
-// - tooltip comments
+// - bug: annotating spaces - this is due to using regex, not doing should resolve the issue
 
 // - color picking - allow the end users to select their own highlight color using a color picker
 
-// - store annotation IDs in a separate entry in local storage to prevent parsing everything
+// - move CSS to TS
+
+// - store annotation IDs in a separate entry in local storage to prevent parsing everything - local storage manager???
 
 // - webpage
 
