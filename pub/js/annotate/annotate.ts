@@ -224,6 +224,7 @@
           annotationElements as HTMLCollectionOf<HTMLElement>,
           this.annotations,
           (element: HTMLElement, annotation: Annotation) => {
+            console.log(element);
             this.tooltipManager.showTooltip(
               annotation.comment,
               element,
@@ -725,10 +726,7 @@
         }
 
         card.onclick = () => {
-          annotationElement.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
+          annotationElement.scrollIntoView({ block: "center" });
           annotationCardClickedCallback(annotationElement, annotation);
         };
         cards.appendChild(card);

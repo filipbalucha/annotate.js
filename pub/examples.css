@@ -2,6 +2,30 @@ body {
   font-family: Georgia, "Times New Roman", Times, serif;
   margin: 5vw;
   background-color: #fdf5e8;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+p {
+  max-width: 75ch;
+}
+
+#manifesto {
+  text-align: justify;
+  padding-top: 1rem;
+}
+
+#demo {
+  text-align: center;
+}
+
+#demo__list {
+  text-align: center;
+  list-style-position: inside;
+  padding: 0;
+  margin: 0;
 }
 
 .heading {
@@ -23,8 +47,16 @@ body {
   padding: 0.25rem;
 }
 
-p {
+.long-text {
+  height: 75vh;
+  overflow-y: scroll;
+  outline: 1px solid gray;
+  width: fit-content;
+}
+
+.long-text p {
   text-align: justify;
+  padding: 0rem 1rem;
 }
 
 .growing-content-wrapper {
