@@ -8,17 +8,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 (function (window, document) {
-    // TODO: move to classes
-    // Global constants
-    var FALLBACK_COLOR_IDX = 0;
-    var FALLBACK_COLOR = "yellow";
-    var ID_TOOLTIP = "__annotate-tooltip__";
-    var ID_COMMENT = "__annotate-comment__";
-    var ID_DELETE_BUTTON = "__annotate-delete__";
-    var COLOR_ATTRIBUTE = "annotate-color";
-    var CLASS_COLOR_BUTTON = "__annotate-color__";
-    var CLASS_COLOR_ROW = "__annotate-color-row__";
-    var ATTRIBUTE_ANNOTATION_ID = "annotate-id";
     var Annotation = /** @class */ (function () {
         function Annotation(anchor, anchorOffset, highlightedString, comment) {
             var _this = this;
@@ -297,7 +286,8 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 var highlights = document.getElementsByClassName(AnnotationManager.CLASS_HIGHLIGHT);
                 for (var i = 0; i < highlights.length; i++) {
                     var highlight = highlights[i];
-                    if (highlight.getAttribute(ATTRIBUTE_ANNOTATION_ID) === annotation.id) {
+                    if (highlight.getAttribute(AnnotationManager.ATTRIBUTE_ANNOTATION_ID) ===
+                        annotation.id) {
                         return highlight;
                     }
                 }
@@ -320,8 +310,8 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
                 var span = document.createElement("span");
                 span.className = AnnotationManager.CLASS_HIGHLIGHT;
-                span.setAttribute(ATTRIBUTE_ANNOTATION_ID, id);
-                span.style.backgroundColor = highlightColor || FALLBACK_COLOR;
+                span.setAttribute(AnnotationManager.ATTRIBUTE_ANNOTATION_ID, id);
+                span.style.backgroundColor = highlightColor;
                 span.onclick = function () {
                     _this.tooltipManager.showTooltip(annotation.comment, span, function (color) { return _this.updateAnnotationColor(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); }, function () { return _this.deleteAnnotation(annotation); });
                 };
@@ -334,28 +324,32 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             this.navigatorManager = navigatorManager;
             this.updateNavigator();
         }
+        AnnotationManager.ATTRIBUTE_ANNOTATION_ID = "annotate-id";
         AnnotationManager.CLASS_HIGHLIGHT = "__annotate-highlight__";
         return AnnotationManager;
     }());
     var TooltipManager = /** @class */ (function () {
         function TooltipManager(colors) {
             var _this = this;
+            this.wasClicked = function (target) {
+                return _this.tooltip.contains(target);
+            };
             this.addDeleteButton = function () {
                 var deleteButton = document.createElement("button");
                 var side = "1rem";
                 deleteButton.innerHTML = "<svg fill=\"gray\" xmlns=\"http://www.w3.org/2000/svg\" width=".concat(side, " height=").concat(side, " viewBox=\"0 0 24 24\"><path d=\"M 10 2 L 9 3 L 3 3 L 3 5 L 4.109375 5 L 5.8925781 20.255859 L 5.8925781 20.263672 C 6.023602 21.250335 6.8803207 22 7.875 22 L 16.123047 22 C 17.117726 22 17.974445 21.250322 18.105469 20.263672 L 18.107422 20.255859 L 19.890625 5 L 21 5 L 21 3 L 15 3 L 14 2 L 10 2 z M 6.125 5 L 17.875 5 L 16.123047 20 L 7.875 20 L 6.125 5 z\"/></svg>");
-                deleteButton.id = ID_DELETE_BUTTON;
+                deleteButton.id = TooltipManager.ID_DELETE_BUTTON;
                 _this.tooltip.appendChild(deleteButton);
             };
             // DOM manipulation:
             this.addColorButtons = function () {
                 var buttons = document.createElement("div");
-                buttons.setAttribute("class", CLASS_COLOR_ROW);
+                buttons.className = TooltipManager.CLASS_COLOR_ROW;
                 for (var i = 0; i < _this.colors.length; i++) {
                     var color = _this.colors[i];
                     var colorButton = document.createElement("button");
-                    colorButton.className = CLASS_COLOR_BUTTON;
-                    colorButton.setAttribute(COLOR_ATTRIBUTE, "" + i);
+                    colorButton.className = TooltipManager.CLASS_COLOR_BUTTON;
+                    colorButton.setAttribute(TooltipManager.COLOR_ATTRIBUTE, "" + i);
                     colorButton.style.backgroundColor = color;
                     buttons.appendChild(colorButton);
                 }
@@ -363,7 +357,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             };
             this.addCommentArea = function () {
                 var commentArea = document.createElement("textarea");
-                commentArea.id = ID_COMMENT;
+                commentArea.id = TooltipManager.ID_COMMENT;
                 commentArea.placeholder = "Type a comment...";
                 _this.tooltip.appendChild(commentArea);
             };
@@ -398,12 +392,12 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 _this.tooltip.style.visibility = "hidden";
             };
             this.showDeleteButton = function (callback) {
-                var deleteButton = document.getElementById(ID_DELETE_BUTTON);
+                var deleteButton = document.getElementById(TooltipManager.ID_DELETE_BUTTON);
                 deleteButton.style.display = "";
                 deleteButton.onclick = callback;
             };
             this.hideDeleteButton = function () {
-                var deleteButton = document.getElementById(ID_DELETE_BUTTON);
+                var deleteButton = document.getElementById(TooltipManager.ID_DELETE_BUTTON);
                 deleteButton.style.display = "none";
             };
             this.computeAnchorPosition = function (anchor) {
@@ -426,20 +420,20 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 _this.updateTooltipPosition();
                 _this.tooltip.style.visibility = "visible";
                 // Add comment to comment area
-                var commentArea = document.getElementById(ID_COMMENT);
+                var commentArea = document.getElementById(TooltipManager.ID_COMMENT);
                 commentArea.value = comment || "";
                 commentArea.onchange = function (e) {
                     updateCommentCallback(e.target.value);
                 };
                 // Bind actions to tooltip color buttons
-                var colorButtons = _this.tooltip.getElementsByClassName(CLASS_COLOR_BUTTON);
+                var colorButtons = _this.tooltip.getElementsByClassName(TooltipManager.CLASS_COLOR_BUTTON);
                 var _loop_1 = function (i) {
                     var button = colorButtons[i];
                     button.onclick = function () {
-                        var idx = parseInt(button.getAttribute(COLOR_ATTRIBUTE));
+                        var idx = parseInt(button.getAttribute(TooltipManager.COLOR_ATTRIBUTE));
                         var newColor = _this.colors[idx] ||
-                            _this.colors[FALLBACK_COLOR_IDX] ||
-                            FALLBACK_COLOR;
+                            _this.colors[TooltipManager.FALLBACK_COLOR_IDX] ||
+                            TooltipManager.FALLBACK_COLOR;
                         selectColorCallback(newColor);
                     };
                 };
@@ -448,11 +442,19 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 }
             };
             this.colors = colors;
-            this.tooltip = document.getElementById(ID_TOOLTIP);
+            this.tooltip = document.getElementById(TooltipManager.ID_TOOLTIP);
             this.addDeleteButton();
             this.addCommentArea();
             this.addColorButtons();
         }
+        TooltipManager.ID_TOOLTIP = "__annotate-tooltip__";
+        TooltipManager.ID_COMMENT = "__annotate-comment__";
+        TooltipManager.ID_DELETE_BUTTON = "__annotate-delete__";
+        TooltipManager.COLOR_ATTRIBUTE = "annotate-color";
+        TooltipManager.CLASS_COLOR_BUTTON = "__annotate-color__";
+        TooltipManager.CLASS_COLOR_ROW = "__annotate-color-row__";
+        TooltipManager.FALLBACK_COLOR = "yellow";
+        TooltipManager.FALLBACK_COLOR_IDX = 0;
         return TooltipManager;
     }());
     var NavigatorManager = /** @class */ (function () {
@@ -474,7 +476,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             };
             this.colorFilter = function (sortedAnnotations, annotationDetails, annotationCardClickedCallback) {
                 var colorFilter = document.createElement("div");
-                colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
+                colorFilter.className = NavigatorManager.CLASS_FILTER_ROW;
                 var uniqueColors = new Set();
                 for (var id in annotationDetails) {
                     var annotation = annotationDetails[id];
@@ -485,7 +487,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                     .sort(), true);
                 sortedColors.forEach(function (color) {
                     var colorButton = document.createElement("button");
-                    colorButton.className = NavigatorManager.CLASS_COLOR_BUTTON;
+                    colorButton.className = NavigatorManager.CLASS_FILTER_BUTTON;
                     colorButton.style.backgroundColor = color;
                     if (_this.filterColor === color) {
                         colorButton.style.border = "2px solid gray";
@@ -509,7 +511,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 cards.style.overflow = "auto";
                 var _loop_2 = function (i) {
                     var annotationElement = sortedAnnotations[i];
-                    var id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
+                    var id = annotationElement.getAttribute(AnnotationManager.ATTRIBUTE_ANNOTATION_ID);
                     var annotation = annotationDetails[id];
                     if (_this.filterColor &&
                         annotation.highlightColor !== _this.filterColor) {
@@ -567,8 +569,8 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
         NavigatorManager.ID_TOGGLE = "__annotate-toggle__";
         NavigatorManager.CLASS_NAVIGATOR_CARD = "__annotate-navigator__card__";
         NavigatorManager.CLASS_NAVIGATOR_CARDS = "__annotate-navigator__cards__";
-        NavigatorManager.CLASS_COLOR_ROW = "__annotate-filter__";
-        NavigatorManager.CLASS_COLOR_BUTTON = "__annotate-filter-color__";
+        NavigatorManager.CLASS_FILTER_ROW = "__annotate-filter__";
+        NavigatorManager.CLASS_FILTER_BUTTON = "__annotate-filter-color__";
         return NavigatorManager;
     }());
     var Annotate = /** @class */ (function () {
@@ -586,8 +588,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 else {
                     (_b = _this.navigatorManager) === null || _b === void 0 ? void 0 : _b.collapseNavigator();
                 }
-                var tooltip = document.getElementById(ID_TOOLTIP);
-                var clickedTooltip = tooltip && tooltip.contains(target);
+                var clickedTooltip = _this.tooltipManager.wasClicked(target);
                 if (!clickedTooltip) {
                     _this.tooltipManager.hideTooltip();
                 }

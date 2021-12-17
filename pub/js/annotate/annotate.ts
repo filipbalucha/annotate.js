@@ -1,16 +1,4 @@
 (function (window, document) {
-  // TODO: move to classes
-  // Global constants
-  const FALLBACK_COLOR_IDX = 0;
-  const FALLBACK_COLOR: Color = "yellow";
-  const ID_TOOLTIP = "__annotate-tooltip__";
-  const ID_COMMENT = "__annotate-comment__";
-  const ID_DELETE_BUTTON = "__annotate-delete__";
-  const COLOR_ATTRIBUTE = "annotate-color";
-  const CLASS_COLOR_BUTTON = "__annotate-color__";
-  const CLASS_COLOR_ROW = "__annotate-color-row__";
-  const ATTRIBUTE_ANNOTATION_ID = "annotate-id";
-
   type Tag = string;
   type ChildIndex = number;
   type Path = [Tag, ChildIndex][];
@@ -193,6 +181,7 @@
   }
 
   class AnnotationManager {
+    public static readonly ATTRIBUTE_ANNOTATION_ID = "annotate-id";
     static readonly CLASS_HIGHLIGHT = "__annotate-highlight__";
 
     colors: Color[];
@@ -404,7 +393,10 @@
       );
       for (let i = 0; i < highlights.length; i++) {
         const highlight = highlights[i] as HTMLElement;
-        if (highlight.getAttribute(ATTRIBUTE_ANNOTATION_ID) === annotation.id) {
+        if (
+          highlight.getAttribute(AnnotationManager.ATTRIBUTE_ANNOTATION_ID) ===
+          annotation.id
+        ) {
           return highlight;
         }
       }
@@ -431,8 +423,8 @@
       // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
       const span = document.createElement("span");
       span.className = AnnotationManager.CLASS_HIGHLIGHT;
-      span.setAttribute(ATTRIBUTE_ANNOTATION_ID, id);
-      span.style.backgroundColor = highlightColor || FALLBACK_COLOR;
+      span.setAttribute(AnnotationManager.ATTRIBUTE_ANNOTATION_ID, id);
+      span.style.backgroundColor = highlightColor;
 
       span.onclick = () => {
         this.tooltipManager.showTooltip(
@@ -449,23 +441,36 @@
   }
 
   class TooltipManager {
+    private static readonly ID_TOOLTIP = "__annotate-tooltip__";
+    private static readonly ID_COMMENT = "__annotate-comment__";
+    private static readonly ID_DELETE_BUTTON = "__annotate-delete__";
+    private static readonly COLOR_ATTRIBUTE = "annotate-color";
+    private static readonly CLASS_COLOR_BUTTON = "__annotate-color__";
+    private static readonly CLASS_COLOR_ROW = "__annotate-color-row__";
+    private static readonly FALLBACK_COLOR: Color = "yellow";
+    private static readonly FALLBACK_COLOR_IDX = 0;
+
     colors: Color[];
     tooltip: HTMLElement;
     anchorPosition: { x: number; y: number; lineHeight: number };
 
     constructor(colors) {
       this.colors = colors;
-      this.tooltip = document.getElementById(ID_TOOLTIP);
+      this.tooltip = document.getElementById(TooltipManager.ID_TOOLTIP);
       this.addDeleteButton();
       this.addCommentArea();
       this.addColorButtons();
     }
 
+    wasClicked = (target: Element): boolean => {
+      return this.tooltip.contains(target);
+    };
+
     addDeleteButton = (): void => {
       const deleteButton = document.createElement("button");
       const side = "1rem";
       deleteButton.innerHTML = `<svg fill="gray" xmlns="http://www.w3.org/2000/svg" width=${side} height=${side} viewBox="0 0 24 24"><path d="M 10 2 L 9 3 L 3 3 L 3 5 L 4.109375 5 L 5.8925781 20.255859 L 5.8925781 20.263672 C 6.023602 21.250335 6.8803207 22 7.875 22 L 16.123047 22 C 17.117726 22 17.974445 21.250322 18.105469 20.263672 L 18.107422 20.255859 L 19.890625 5 L 21 5 L 21 3 L 15 3 L 14 2 L 10 2 z M 6.125 5 L 17.875 5 L 16.123047 20 L 7.875 20 L 6.125 5 z"/></svg>`;
-      deleteButton.id = ID_DELETE_BUTTON;
+      deleteButton.id = TooltipManager.ID_DELETE_BUTTON;
 
       this.tooltip.appendChild(deleteButton);
     };
@@ -473,12 +478,12 @@
     // DOM manipulation:
     addColorButtons = (): void => {
       const buttons = document.createElement("div");
-      buttons.setAttribute("class", CLASS_COLOR_ROW);
+      buttons.className = TooltipManager.CLASS_COLOR_ROW;
       for (let i = 0; i < this.colors.length; i++) {
         const color = this.colors[i];
         const colorButton = document.createElement("button");
-        colorButton.className = CLASS_COLOR_BUTTON;
-        colorButton.setAttribute(COLOR_ATTRIBUTE, "" + i);
+        colorButton.className = TooltipManager.CLASS_COLOR_BUTTON;
+        colorButton.setAttribute(TooltipManager.COLOR_ATTRIBUTE, "" + i);
         colorButton.style.backgroundColor = color;
         buttons.appendChild(colorButton);
       }
@@ -487,7 +492,7 @@
 
     addCommentArea = (): void => {
       const commentArea = document.createElement("textarea");
-      commentArea.id = ID_COMMENT;
+      commentArea.id = TooltipManager.ID_COMMENT;
       commentArea.placeholder = "Type a comment...";
       this.tooltip.appendChild(commentArea);
     };
@@ -525,13 +530,17 @@
     };
 
     showDeleteButton = (callback: () => void): void => {
-      const deleteButton = document.getElementById(ID_DELETE_BUTTON);
+      const deleteButton = document.getElementById(
+        TooltipManager.ID_DELETE_BUTTON
+      );
       deleteButton.style.display = "";
       deleteButton.onclick = callback;
     };
 
     hideDeleteButton = (): void => {
-      const deleteButton = document.getElementById(ID_DELETE_BUTTON);
+      const deleteButton = document.getElementById(
+        TooltipManager.ID_DELETE_BUTTON
+      );
       deleteButton.style.display = "none";
     };
 
@@ -565,7 +574,7 @@
 
       // Add comment to comment area
       const commentArea = document.getElementById(
-        ID_COMMENT
+        TooltipManager.ID_COMMENT
       ) as HTMLInputElement;
       commentArea.value = comment || "";
       commentArea.onchange = (e: Event) => {
@@ -573,16 +582,19 @@
       };
 
       // Bind actions to tooltip color buttons
-      const colorButtons =
-        this.tooltip.getElementsByClassName(CLASS_COLOR_BUTTON);
+      const colorButtons = this.tooltip.getElementsByClassName(
+        TooltipManager.CLASS_COLOR_BUTTON
+      );
       for (let i = 0; i < colorButtons.length; i++) {
         const button = colorButtons[i] as HTMLElement;
         button.onclick = () => {
-          const idx = parseInt(button.getAttribute(COLOR_ATTRIBUTE));
+          const idx = parseInt(
+            button.getAttribute(TooltipManager.COLOR_ATTRIBUTE)
+          );
           const newColor =
             this.colors[idx] ||
-            this.colors[FALLBACK_COLOR_IDX] ||
-            FALLBACK_COLOR;
+            this.colors[TooltipManager.FALLBACK_COLOR_IDX] ||
+            TooltipManager.FALLBACK_COLOR;
           selectColorCallback(newColor);
         };
       }
@@ -590,12 +602,14 @@
   }
 
   class NavigatorManager {
-    static readonly ID_NAVIGATOR = "__annotate-navigator__";
-    static readonly ID_TOGGLE = "__annotate-toggle__";
-    static readonly CLASS_NAVIGATOR_CARD = "__annotate-navigator__card__";
-    static readonly CLASS_NAVIGATOR_CARDS = "__annotate-navigator__cards__";
-    static readonly CLASS_COLOR_ROW = "__annotate-filter__";
-    static readonly CLASS_COLOR_BUTTON = "__annotate-filter-color__";
+    private static readonly ID_NAVIGATOR = "__annotate-navigator__";
+    private static readonly ID_TOGGLE = "__annotate-toggle__";
+    private static readonly CLASS_NAVIGATOR_CARD =
+      "__annotate-navigator__card__";
+    private static readonly CLASS_NAVIGATOR_CARDS =
+      "__annotate-navigator__cards__";
+    private static readonly CLASS_FILTER_ROW = "__annotate-filter__";
+    private static readonly CLASS_FILTER_BUTTON = "__annotate-filter-color__";
 
     colors: Color[];
     navigator: HTMLElement;
@@ -653,7 +667,7 @@
       ) => void
     ): HTMLDivElement => {
       const colorFilter = document.createElement("div");
-      colorFilter.className = NavigatorManager.CLASS_COLOR_ROW;
+      colorFilter.className = NavigatorManager.CLASS_FILTER_ROW;
       const uniqueColors = new Set<Annotation["highlightColor"]>();
       for (const id in annotationDetails) {
         const annotation = annotationDetails[id];
@@ -668,7 +682,7 @@
 
       sortedColors.forEach((color) => {
         const colorButton = document.createElement("button");
-        colorButton.className = NavigatorManager.CLASS_COLOR_BUTTON;
+        colorButton.className = NavigatorManager.CLASS_FILTER_BUTTON;
         colorButton.style.backgroundColor = color;
         if (this.filterColor === color) {
           colorButton.style.border = "2px solid gray";
@@ -704,7 +718,9 @@
 
       for (let i = 0; i < sortedAnnotations.length; i++) {
         const annotationElement = sortedAnnotations[i];
-        const id = annotationElement.getAttribute(ATTRIBUTE_ANNOTATION_ID);
+        const id = annotationElement.getAttribute(
+          AnnotationManager.ATTRIBUTE_ANNOTATION_ID
+        );
         const annotation = annotationDetails[id];
 
         if (
@@ -797,8 +813,7 @@
         this.navigatorManager?.collapseNavigator();
       }
 
-      const tooltip = document.getElementById(ID_TOOLTIP);
-      const clickedTooltip = tooltip && tooltip.contains(target);
+      const clickedTooltip = this.tooltipManager.wasClicked(target);
       if (!clickedTooltip) {
         this.tooltipManager.hideTooltip();
       }
