@@ -11,6 +11,7 @@
   const CLASS_HIGHLIGHT = "__annotate-highlight__";
   const CLASS_COLOR_BUTTON = "__annotate-color__";
   const CLASS_COLOR_ROW = "__annotate-color-row__";
+  const ATTRIBUTE_ANNOTATION_ID = "annotate-id";
 
   // Data
 
@@ -254,7 +255,7 @@
       const range = selection.getRangeAt(0).cloneRange();
 
       this.insertAnnotationIntoDOM(annotation, range);
-      window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
+      this.updateAnnotationInLocalStorage(annotation);
 
       this.tooltipManager.showDeleteButton(() =>
         this.deleteAnnotation(annotation)
@@ -310,11 +311,24 @@
       return node as Element;
     };
 
+    updateAnnotationColor = (
+      annotation: Annotation,
+      color: Annotation["highlightColor"]
+    ): void => {
+      annotation.highlightColor = color;
+      this.updateAnnotationInLocalStorage(annotation);
+      this.updateAnnotationColorInDOM(annotation, color);
+    };
+
     updateAnnotationComment = (
       annotation: Annotation,
       newComment: Annotation["comment"]
-    ) => {
+    ): void => {
       annotation.comment = newComment;
+      this.updateAnnotationInLocalStorage(annotation);
+    };
+
+    updateAnnotationInLocalStorage = (annotation: Annotation) => {
       window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
     };
 
@@ -333,25 +347,13 @@
       const scrollTop = document.scrollingElement.scrollTop;
       const scrollLeft = document.scrollingElement.scrollLeft;
       this.tooltipManager.showTooltip(
-        annotation,
+        annotation.comment,
         x + scrollLeft,
         y + scrollTop,
         height,
-        this.updateColor,
-        this.addAnnotation,
+        (color) => this.addAnnotation(annotation, color),
         (comment) => this.updateAnnotationComment(annotation, comment)
       );
-    };
-
-    // Functions that manipulate the DOM
-    updateColor = (annotation: Annotation, newColor: Color) => {
-      const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
-      for (let i = 0; i < highlights.length; i++) {
-        const highlight = highlights[i] as HTMLElement;
-        if (highlight.getAttribute("annotate-id") === annotation.id) {
-          highlight.style.backgroundColor = newColor;
-        }
-      }
     };
 
     deleteAnnotation = (annotation: Annotation): void => {
@@ -361,13 +363,17 @@
       this.tooltipManager.hideTooltip();
     };
 
-    // Methods that work with the DOM:
+    // Functions that manipulate the DOM:
+    updateAnnotationColorInDOM = (annotation: Annotation, color: Color) => {
+      const annotationElement = this.findAnnotationInDOM(annotation);
+      annotationElement.style.backgroundColor = color;
+    };
 
-    findAnnotationInDOM = (annotation: Annotation): Element | undefined => {
+    findAnnotationInDOM = (annotation: Annotation): HTMLElement | undefined => {
       const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
       for (let i = 0; i < highlights.length; i++) {
         const highlight = highlights[i] as HTMLElement;
-        if (highlight.getAttribute("annotate-id") === annotation.id) {
+        if (highlight.getAttribute(ATTRIBUTE_ANNOTATION_ID) === annotation.id) {
           return highlight;
         }
       }
@@ -394,7 +400,7 @@
       // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
       const span = document.createElement("span");
       span.className = CLASS_HIGHLIGHT;
-      span.setAttribute("annotate-id", id);
+      span.setAttribute(ATTRIBUTE_ANNOTATION_ID, id);
       span.style.backgroundColor = highlightColor || FALLBACK_COLOR;
 
       span.onclick = () => {
@@ -405,12 +411,11 @@
         const lineHeight = span.offsetHeight;
 
         this.tooltipManager.showTooltip(
-          annotation,
+          annotation.comment,
           x,
           y,
           lineHeight,
-          this.updateColor,
-          this.addAnnotation,
+          (color) => this.updateAnnotationColor(annotation, color),
           (comment) => this.updateAnnotationComment(annotation, comment),
           () => this.deleteAnnotation(annotation)
         );
@@ -506,13 +511,11 @@
     };
 
     showTooltip = (
-      annotation: Annotation,
+      comment: Annotation["comment"],
       x: number,
       y: number,
       lineHeight: number,
-      // TODO: use a single callback
-      updateColor: (Annotation, Color) => void,
-      addAnnotation: (Annotation, Color) => void,
+      selectColorCallback: (string) => void,
       updateCommentCallback: (string) => void,
       deleteAnnotationCallback?: () => void
     ) => {
@@ -530,7 +533,7 @@
       const commentArea = document.getElementById(
         ID_COMMENT
       ) as HTMLInputElement;
-      commentArea.value = annotation.comment || "";
+      commentArea.value = comment || "";
       commentArea.onchange = (e: Event) => {
         updateCommentCallback((e.target as HTMLInputElement).value);
       };
@@ -546,18 +549,7 @@
             this.colors[idx] ||
             this.colors[FALLBACK_COLOR_IDX] ||
             FALLBACK_COLOR;
-          if (
-            annotation.highlightColor &&
-            annotation.highlightColor !== newColor
-          ) {
-            annotation.highlightColor = newColor;
-            updateColor(annotation, newColor);
-            // TODO: implement update of local storage object
-          } else {
-            addAnnotation(annotation, newColor);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-          }
+          selectColorCallback(newColor);
         };
       }
     };

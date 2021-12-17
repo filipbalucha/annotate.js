@@ -11,6 +11,7 @@
     var CLASS_HIGHLIGHT = "__annotate-highlight__";
     var CLASS_COLOR_BUTTON = "__annotate-color__";
     var CLASS_COLOR_ROW = "__annotate-color-row__";
+    var ATTRIBUTE_ANNOTATION_ID = "annotate-id";
     var Annotation = /** @class */ (function () {
         function Annotation(anchor, anchorOffset, highlightedString, comment) {
             var _this = this;
@@ -192,7 +193,7 @@
                 var selection = window.getSelection();
                 var range = selection.getRangeAt(0).cloneRange();
                 _this.insertAnnotationIntoDOM(annotation, range);
-                window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
+                _this.updateAnnotationInLocalStorage(annotation);
                 _this.tooltipManager.showDeleteButton(function () {
                     return _this.deleteAnnotation(annotation);
                 });
@@ -238,8 +239,16 @@
                 }
                 return node;
             };
+            this.updateAnnotationColor = function (annotation, color) {
+                annotation.highlightColor = color;
+                _this.updateAnnotationInLocalStorage(annotation);
+                _this.updateAnnotationColorInDOM(annotation, color);
+            };
             this.updateAnnotationComment = function (annotation, newComment) {
                 annotation.comment = newComment;
+                _this.updateAnnotationInLocalStorage(annotation);
+            };
+            this.updateAnnotationInLocalStorage = function (annotation) {
                 window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
             };
             this.startSelectionInteraction = function () {
@@ -253,17 +262,7 @@
                 var _a = selection.getRangeAt(0).getBoundingClientRect(), x = _a.x, y = _a.y, height = _a.height;
                 var scrollTop = document.scrollingElement.scrollTop;
                 var scrollLeft = document.scrollingElement.scrollLeft;
-                _this.tooltipManager.showTooltip(annotation, x + scrollLeft, y + scrollTop, height, _this.updateColor, _this.addAnnotation, function (comment) { return _this.updateAnnotationComment(annotation, comment); });
-            };
-            // Functions that manipulate the DOM
-            this.updateColor = function (annotation, newColor) {
-                var highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
-                for (var i = 0; i < highlights.length; i++) {
-                    var highlight = highlights[i];
-                    if (highlight.getAttribute("annotate-id") === annotation.id) {
-                        highlight.style.backgroundColor = newColor;
-                    }
-                }
+                _this.tooltipManager.showTooltip(annotation.comment, x + scrollLeft, y + scrollTop, height, function (color) { return _this.addAnnotation(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); });
             };
             this.deleteAnnotation = function (annotation) {
                 delete _this.annotations[annotation.id]; // TODO: uncomment!!!
@@ -271,12 +270,16 @@
                 _this.removeAnnotationFromDOM(annotation);
                 _this.tooltipManager.hideTooltip();
             };
-            // Methods that work with the DOM:
+            // Functions that manipulate the DOM:
+            this.updateAnnotationColorInDOM = function (annotation, color) {
+                var annotationElement = _this.findAnnotationInDOM(annotation);
+                annotationElement.style.backgroundColor = color;
+            };
             this.findAnnotationInDOM = function (annotation) {
                 var highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
                 for (var i = 0; i < highlights.length; i++) {
                     var highlight = highlights[i];
-                    if (highlight.getAttribute("annotate-id") === annotation.id) {
+                    if (highlight.getAttribute(ATTRIBUTE_ANNOTATION_ID) === annotation.id) {
                         return highlight;
                     }
                 }
@@ -299,7 +302,7 @@
                 // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
                 var span = document.createElement("span");
                 span.className = CLASS_HIGHLIGHT;
-                span.setAttribute("annotate-id", id);
+                span.setAttribute(ATTRIBUTE_ANNOTATION_ID, id);
                 span.style.backgroundColor = highlightColor || FALLBACK_COLOR;
                 span.onclick = function () {
                     var scrollLeft = document.scrollingElement.scrollLeft;
@@ -307,7 +310,7 @@
                     var x = scrollLeft + span.getBoundingClientRect().x;
                     var y = scrollTop + span.getBoundingClientRect().y;
                     var lineHeight = span.offsetHeight;
-                    _this.tooltipManager.showTooltip(annotation, x, y, lineHeight, _this.updateColor, _this.addAnnotation, function (comment) { return _this.updateAnnotationComment(annotation, comment); }, function () { return _this.deleteAnnotation(annotation); });
+                    _this.tooltipManager.showTooltip(annotation.comment, x, y, lineHeight, function (color) { return _this.updateAnnotationColor(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); }, function () { return _this.deleteAnnotation(annotation); });
                 };
                 range.surroundContents(span);
             };
@@ -386,9 +389,7 @@
                 var deleteButton = document.getElementById(ID_DELETE_BUTTON);
                 deleteButton.style.display = "none";
             };
-            this.showTooltip = function (annotation, x, y, lineHeight, 
-            // TODO: use a single callback
-            updateColor, addAnnotation, updateCommentCallback, deleteAnnotationCallback) {
+            this.showTooltip = function (comment, x, y, lineHeight, selectColorCallback, updateCommentCallback, deleteAnnotationCallback) {
                 if (deleteAnnotationCallback) {
                     _this.showDeleteButton(deleteAnnotationCallback);
                 }
@@ -400,7 +401,7 @@
                 _this.tooltip.style.visibility = "visible";
                 // Add comment to comment area
                 var commentArea = document.getElementById(ID_COMMENT);
-                commentArea.value = annotation.comment || "";
+                commentArea.value = comment || "";
                 commentArea.onchange = function (e) {
                     updateCommentCallback(e.target.value);
                 };
@@ -413,17 +414,7 @@
                         var newColor = _this.colors[idx] ||
                             _this.colors[FALLBACK_COLOR_IDX] ||
                             FALLBACK_COLOR;
-                        if (annotation.highlightColor &&
-                            annotation.highlightColor !== newColor) {
-                            annotation.highlightColor = newColor;
-                            updateColor(annotation, newColor);
-                            // TODO: implement update of local storage object
-                        }
-                        else {
-                            addAnnotation(annotation, newColor);
-                            var selection = window.getSelection();
-                            selection.removeAllRanges();
-                        }
+                        selectColorCallback(newColor);
                     };
                 };
                 for (var i = 0; i < colorButtons.length; i++) {
