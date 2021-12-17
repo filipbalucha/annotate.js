@@ -99,6 +99,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
 }
 
 #__annotate-navigator__ .__annotate-navigator__card__:hover {

@@ -22,8 +22,6 @@ p {
 }
 
 #demo__list {
-  text-align: center;
-  list-style-position: inside;
   padding: 0;
   margin: 0;
 }
