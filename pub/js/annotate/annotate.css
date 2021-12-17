@@ -35,6 +35,10 @@
   margin: 4.5px;
 }
 
+#__annotate-delete__:hover {
+  cursor: pointer;
+}
+
 #__annotate-tooltip__ .__annotate-color__:hover {
   cursor: pointer;
 }

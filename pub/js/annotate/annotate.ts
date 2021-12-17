@@ -203,6 +203,7 @@
       this.loadAnnotationsFromLocalStorage();
     }
 
+    // TODO: merge with addannotation somehow?
     loadAnnotationsFromLocalStorage = (): void => {
       for (let i = 0; i < window.localStorage.length; i++) {
         try {
@@ -210,6 +211,7 @@
           const annotation = Annotation.fromJSON(
             window.localStorage.getItem(id)
           );
+          this.annotations[id] = annotation;
 
           const range = this.annotationRange(annotation);
           this.insertAnnotationIntoDOM(annotation, range);
@@ -246,7 +248,6 @@
 
       annotation.highlightColor = color;
       this.annotations[id] = annotation;
-      this.elementWithHighlight(annotation.path);
 
       const selection = window.getSelection();
       const range = selection.getRangeAt(0).cloneRange();
@@ -338,6 +339,39 @@
       }
     };
 
+    deleteAnnotation = (annotation: Annotation): void => {
+      delete this.annotations[annotation.id]; // TODO: uncomment!!!
+      window.localStorage.removeItem(annotation.id);
+      this.removeAnnotationFromDOM(annotation);
+    };
+
+    // Methods that work with the DOM:
+
+    findAnnotationInDOM = (annotation: Annotation): Element | undefined => {
+      const highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
+      for (let i = 0; i < highlights.length; i++) {
+        const highlight = highlights[i] as HTMLElement;
+        if (highlight.getAttribute("annotate-id") === annotation.id) {
+          return highlight;
+        }
+      }
+      return;
+    };
+
+    removeAnnotationFromDOM = (annotation: Annotation): void => {
+      // Note: code adapted from kennebec's answer: https://stackoverflow.com/a/1614909/7427716
+      const annotationNode = this.findAnnotationInDOM(annotation);
+      const parentNode = annotationNode.parentNode;
+      // Move all children of the annotation element under its parent
+      while (annotationNode.firstChild) {
+        parentNode.insertBefore(annotationNode.firstChild, annotationNode);
+      }
+      parentNode.removeChild(annotationNode);
+
+      // Join sibling text nodes
+      parentNode.normalize();
+    };
+
     insertAnnotationIntoDOM = (annotation: Annotation, range: Range) => {
       const { id, highlightColor } = annotation;
 
@@ -360,7 +394,8 @@
           y,
           lineHeight,
           this.updateColor,
-          this.addAnnotation
+          this.addAnnotation,
+          () => this.deleteAnnotation(annotation)
         );
       };
 
@@ -406,17 +441,15 @@
       x: number,
       y: number,
       lineHeight: number,
+      // TODO: use a single callback
       updateColor: (Annotation, Color) => void,
-      addAnnotation: (Annotation, Color) => void
+      addAnnotation: (Annotation, Color) => void,
+      deleteAnnotationCallback?: (Annotation) => void
     ) => {
-      // TODO: only make delete button visible if annotation already exists
-      const highlighted = Boolean(annotation.highlightColor);
       const deleteButton = document.getElementById(ID_DELETE_BUTTON);
-      if (highlighted) {
+      if (deleteAnnotationCallback) {
         deleteButton.style.display = "";
-        deleteButton.onclick = () => {
-          console.log("joma");
-        };
+        deleteButton.onclick = deleteAnnotationCallback;
       } else {
         deleteButton.style.display = "none";
       }

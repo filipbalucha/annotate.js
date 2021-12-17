@@ -152,11 +152,13 @@
     var AnnotationManager = /** @class */ (function () {
         function AnnotationManager(colors) {
             var _this = this;
+            // TODO: merge with addannotation somehow?
             this.loadAnnotationsFromLocalStorage = function () {
                 for (var i = 0; i < window.localStorage.length; i++) {
                     try {
                         var id = window.localStorage.key(i);
                         var annotation = Annotation.fromJSON(window.localStorage.getItem(id));
+                        _this.annotations[id] = annotation;
                         var range = _this.annotationRange(annotation);
                         _this.insertAnnotationIntoDOM(annotation, range);
                     }
@@ -186,7 +188,6 @@
                 var id = annotation.id;
                 annotation.highlightColor = color;
                 _this.annotations[id] = annotation;
-                _this.elementWithHighlight(annotation.path);
                 var selection = window.getSelection();
                 var range = selection.getRangeAt(0).cloneRange();
                 _this.insertAnnotationIntoDOM(annotation, range);
@@ -255,6 +256,34 @@
                     }
                 }
             };
+            this.deleteAnnotation = function (annotation) {
+                delete _this.annotations[annotation.id]; // TODO: uncomment!!!
+                window.localStorage.removeItem(annotation.id);
+                _this.removeAnnotationFromDOM(annotation);
+            };
+            // Methods that work with the DOM:
+            this.findAnnotationInDOM = function (annotation) {
+                var highlights = document.getElementsByClassName(CLASS_HIGHLIGHT);
+                for (var i = 0; i < highlights.length; i++) {
+                    var highlight = highlights[i];
+                    if (highlight.getAttribute("annotate-id") === annotation.id) {
+                        return highlight;
+                    }
+                }
+                return;
+            };
+            this.removeAnnotationFromDOM = function (annotation) {
+                // Note: code adapted from kennebec's answer: https://stackoverflow.com/a/1614909/7427716
+                var annotationNode = _this.findAnnotationInDOM(annotation);
+                var parentNode = annotationNode.parentNode;
+                // Move all children of the annotation element under its parent
+                while (annotationNode.firstChild) {
+                    parentNode.insertBefore(annotationNode.firstChild, annotationNode);
+                }
+                parentNode.removeChild(annotationNode);
+                // Join sibling text nodes
+                parentNode.normalize();
+            };
             this.insertAnnotationIntoDOM = function (annotation, range) {
                 var id = annotation.id, highlightColor = annotation.highlightColor;
                 // Note: code adapted from Abhay Padda's answer: https://stackoverflow.com/a/53909619/7427716
@@ -268,7 +297,7 @@
                     var x = scrollLeft + span.getBoundingClientRect().x;
                     var y = scrollTop + span.getBoundingClientRect().y;
                     var lineHeight = span.offsetHeight;
-                    _this.tooltipManager.showTooltip(annotation, x, y, lineHeight, _this.updateColor, _this.addAnnotation);
+                    _this.tooltipManager.showTooltip(annotation, x, y, lineHeight, _this.updateColor, _this.addAnnotation, function () { return _this.deleteAnnotation(annotation); });
                 };
                 range.surroundContents(span);
             };
@@ -302,15 +331,13 @@
                 }
                 _this.tooltip.appendChild(buttons);
             };
-            this.showTooltip = function (annotation, x, y, lineHeight, updateColor, addAnnotation) {
-                // TODO: only make delete button visible if annotation already exists
-                var highlighted = Boolean(annotation.highlightColor);
+            this.showTooltip = function (annotation, x, y, lineHeight, 
+            // TODO: use a single callback
+            updateColor, addAnnotation, deleteAnnotationCallback) {
                 var deleteButton = document.getElementById(ID_DELETE_BUTTON);
-                if (highlighted) {
+                if (deleteAnnotationCallback) {
                     deleteButton.style.display = "";
-                    deleteButton.onclick = function () {
-                        console.log("joma");
-                    };
+                    deleteButton.onclick = deleteAnnotationCallback;
                 }
                 else {
                     deleteButton.style.display = "none";
