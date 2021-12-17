@@ -192,6 +192,10 @@
                 var range = selection.getRangeAt(0).cloneRange();
                 _this.insertAnnotationIntoDOM(annotation, range);
                 window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
+                _this.tooltipManager.showDeleteButton(function () {
+                    console.log("delete");
+                });
+                _this.tooltipManager.updateTooltipPosition();
                 selection.removeAllRanges();
                 selection.addRange(range);
             };
@@ -331,17 +335,8 @@
                 }
                 _this.tooltip.appendChild(buttons);
             };
-            this.showTooltip = function (annotation, x, y, lineHeight, 
-            // TODO: use a single callback
-            updateColor, addAnnotation, deleteAnnotationCallback) {
-                var deleteButton = document.getElementById(ID_DELETE_BUTTON);
-                if (deleteAnnotationCallback) {
-                    deleteButton.style.display = "";
-                    deleteButton.onclick = deleteAnnotationCallback;
-                }
-                else {
-                    deleteButton.style.display = "none";
-                }
+            this.updateTooltipPosition = function () {
+                var _a = _this.anchorPosition, x = _a.x, y = _a.y, lineHeight = _a.lineHeight;
                 // Prevent vertical overflow
                 var offsetTop;
                 var tooltipHeight = _this.tooltip.offsetHeight;
@@ -366,6 +361,27 @@
                     offsetLeft = x;
                 }
                 _this.tooltip.style.transform = "translate(".concat(offsetLeft, "px, ").concat(offsetTop, "px");
+            };
+            this.showDeleteButton = function (callback) {
+                var deleteButton = document.getElementById(ID_DELETE_BUTTON);
+                deleteButton.style.display = "";
+                deleteButton.onclick = callback;
+            };
+            this.hideDeleteButton = function () {
+                var deleteButton = document.getElementById(ID_DELETE_BUTTON);
+                deleteButton.style.display = "none";
+            };
+            this.showTooltip = function (annotation, x, y, lineHeight, 
+            // TODO: use a single callback
+            updateColor, addAnnotation, deleteAnnotationCallback) {
+                if (deleteAnnotationCallback) {
+                    _this.showDeleteButton(deleteAnnotationCallback);
+                }
+                else {
+                    _this.hideDeleteButton();
+                }
+                _this.anchorPosition = { x: x, y: y, lineHeight: lineHeight };
+                _this.updateTooltipPosition();
                 _this.tooltip.style.visibility = "visible";
                 // Bind actions to tooltip color buttons
                 var colorButtons = _this.tooltip.getElementsByClassName(CLASS_COLOR_BUTTON);

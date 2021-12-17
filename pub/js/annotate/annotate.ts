@@ -255,6 +255,11 @@
       this.insertAnnotationIntoDOM(annotation, range);
       window.localStorage.setItem(annotation.id, JSON.stringify(annotation));
 
+      this.tooltipManager.showDeleteButton(() => {
+        console.log("delete");
+      });
+      this.tooltipManager.updateTooltipPosition();
+
       selection.removeAllRanges();
       selection.addRange(range);
     };
@@ -406,6 +411,7 @@
   class TooltipManager {
     colors: Color[];
     tooltip: HTMLElement;
+    anchorPosition: { x: number; y: number; lineHeight: number };
 
     constructor(colors) {
       this.colors = colors;
@@ -436,24 +442,8 @@
       this.tooltip.appendChild(buttons);
     };
 
-    showTooltip = (
-      annotation: Annotation,
-      x: number,
-      y: number,
-      lineHeight: number,
-      // TODO: use a single callback
-      updateColor: (Annotation, Color) => void,
-      addAnnotation: (Annotation, Color) => void,
-      deleteAnnotationCallback?: (Annotation) => void
-    ) => {
-      const deleteButton = document.getElementById(ID_DELETE_BUTTON);
-      if (deleteAnnotationCallback) {
-        deleteButton.style.display = "";
-        deleteButton.onclick = deleteAnnotationCallback;
-      } else {
-        deleteButton.style.display = "none";
-      }
-
+    updateTooltipPosition = () => {
+      const { x, y, lineHeight } = this.anchorPosition;
       // Prevent vertical overflow
       let offsetTop;
       const tooltipHeight = this.tooltip.offsetHeight;
@@ -478,6 +468,37 @@
       }
 
       this.tooltip.style.transform = `translate(${offsetLeft}px, ${offsetTop}px`;
+    };
+
+    showDeleteButton = (callback: () => void): void => {
+      const deleteButton = document.getElementById(ID_DELETE_BUTTON);
+      deleteButton.style.display = "";
+      deleteButton.onclick = callback;
+    };
+
+    hideDeleteButton = (): void => {
+      const deleteButton = document.getElementById(ID_DELETE_BUTTON);
+      deleteButton.style.display = "none";
+    };
+
+    showTooltip = (
+      annotation: Annotation,
+      x: number,
+      y: number,
+      lineHeight: number,
+      // TODO: use a single callback
+      updateColor: (Annotation, Color) => void,
+      addAnnotation: (Annotation, Color) => void,
+      deleteAnnotationCallback?: () => void
+    ) => {
+      if (deleteAnnotationCallback) {
+        this.showDeleteButton(deleteAnnotationCallback);
+      } else {
+        this.hideDeleteButton();
+      }
+
+      this.anchorPosition = { x, y, lineHeight };
+      this.updateTooltipPosition();
       this.tooltip.style.visibility = "visible";
 
       // Bind actions to tooltip color buttons
