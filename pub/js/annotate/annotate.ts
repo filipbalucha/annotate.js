@@ -198,12 +198,16 @@
     colors: Color[];
     annotations: { [key: string]: Annotation };
     tooltipManager: TooltipManager;
-    navigatorManager: NavigatorManager;
+    navigatorManager: NavigatorManager | null;
 
-    constructor(colors, navigatorManager: NavigatorManager) {
+    constructor(
+      colors,
+      tooltipManager: TooltipManager,
+      navigatorManager: NavigatorManager | null
+    ) {
       this.colors = colors;
       this.annotations = {};
-      this.tooltipManager = new TooltipManager(colors);
+      this.tooltipManager = tooltipManager;
 
       this.loadAnnotationsFromLocalStorage();
 
@@ -767,14 +771,17 @@
 
   class Annotate {
     annotationManager: AnnotationManager;
+    tooltipManager: TooltipManager;
     navigatorManager: NavigatorManager;
 
     constructor(colors: Color[], showNavigator: boolean) {
       this.navigatorManager = showNavigator
         ? new NavigatorManager(colors)
         : null;
+      this.tooltipManager = new TooltipManager(colors);
       this.annotationManager = new AnnotationManager(
         colors,
+        this.tooltipManager,
         this.navigatorManager
       );
       document.addEventListener("mouseup", this.handleMouseUp);
@@ -795,7 +802,7 @@
       const tooltip = document.getElementById(ID_TOOLTIP);
       const clickedTooltip = tooltip && tooltip.contains(target);
       if (!clickedTooltip) {
-        document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager
+        this.tooltipManager.hideTooltip();
       }
 
       const shouldStartSelectionInteraction =

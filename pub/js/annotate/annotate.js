@@ -162,7 +162,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
         return Annotation;
     }());
     var AnnotationManager = /** @class */ (function () {
-        function AnnotationManager(colors, navigatorManager) {
+        function AnnotationManager(colors, tooltipManager, navigatorManager) {
             var _this = this;
             this.updateNavigator = function () {
                 if (_this.navigatorManager) {
@@ -328,7 +328,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             };
             this.colors = colors;
             this.annotations = {};
-            this.tooltipManager = new TooltipManager(colors);
+            this.tooltipManager = tooltipManager;
             this.loadAnnotationsFromLocalStorage();
             this.navigatorManager = navigatorManager;
             this.updateNavigator();
@@ -591,7 +591,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 var tooltip = document.getElementById(ID_TOOLTIP);
                 var clickedTooltip = tooltip && tooltip.contains(target);
                 if (!clickedTooltip) {
-                    document.getElementById(ID_TOOLTIP).style.visibility = "hidden"; // TODO: move this under TooltipManager
+                    _this.tooltipManager.hideTooltip();
                 }
                 var shouldStartSelectionInteraction = selection.toString().length &&
                     anchorNode.isSameNode(focusNode) &&
@@ -604,7 +604,8 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             this.navigatorManager = showNavigator
                 ? new NavigatorManager(colors)
                 : null;
-            this.annotationManager = new AnnotationManager(colors, this.navigatorManager);
+            this.tooltipManager = new TooltipManager(colors);
+            this.annotationManager = new AnnotationManager(colors, this.tooltipManager, this.navigatorManager);
             document.addEventListener("mouseup", this.handleMouseUp);
         }
         return Annotate;
