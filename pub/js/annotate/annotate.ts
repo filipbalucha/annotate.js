@@ -585,7 +585,7 @@
       const colorPicker = document.getElementById(
         TooltipManager.ID_COLOR_PICKER
       ) as HTMLInputElement;
-      colorPicker.oninput = (e: Event) => {
+      colorPicker.onchange = (e: Event) => {
         const newColor = (e.target as HTMLInputElement).value;
         selectColorCallback(newColor);
       };
@@ -833,16 +833,16 @@
 })(window, window.document);
 
 // future considerations:
+// - improve UX:
+//    -> freeze selection, make it stay as long as tooltip is open?
+//    -> animations
+//    -> make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
 // - improve working with localStorage
 // -> store a list of annotation IDs to look for rather than trying to parse all entries
 // - cleaner files
 // -> move CSS to TS
 // -> separate files
 // -> compile into a single js file in a separate directory
-// - improve UX:
-//    -> animations
-//    -> freeze selection, make it stay as long as tooltip is open?
-//    -> make sure the tooltip appears at the start of the selection -> get the smaller x coordinate of mouseup vs. mousedown
 // - cleanup
 // -> stop working with regex and use text instead? implement in parallel before removing regex!
 // - extend API - add callbacks? annotation created, changed, ...

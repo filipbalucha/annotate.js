@@ -10,6 +10,8 @@
 
   border: 1px solid gray;
   border-radius: 5px;
+
+  visibility: hidden;
 }
 
 #__annotate-tooltip__ .__annotate-color-row__ {

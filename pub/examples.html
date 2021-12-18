@@ -11,35 +11,37 @@
   </head>
   <body>
     <div class="heading">annotate.js</div>
-    <div class="subheading">Annotations, made effortless.</div>
+    <div class="subheading"><em>Annotations, made effortless.</em></div>
     <p id="manifesto">
-      Allow users to highlight and annotate text on your webpage. The annotations persist across sessions and can be easily navigated using the annotate.js navigator component. It's lightweight and has no dependencies – not even jQuery!
+      Allow users to highlight and annotate text on your webpage. Annotations persist across sessions and can be easily navigated using the annotate.js navigator component.  Annotate.js is lightweight and has no dependencies – not even jQuery!
     </p>
-    <p>
-      Annotate.js aims to help users capture their thoughts. Its navigation component helps users navigate long texts. Annotate.js also helps annotate content in webpages with growing content.
-    </p>
-    <p id="demo">
-      Try it out:
-      <ol id="demo__list">
-        <li>Select some text</li>
-        <li>A tooltip will appear</li>
-        <li>Pick one of the predefined highlight colors or click on the last one to pick your own</li>
-        <li><em>Optional:</em> Add a comment</li>
-        <li>Click on a highlight to modify it</li>
-        <li>Repeat!</li>
-        <li><em>Optional:</em> Navigate your annotations:</li>
-          <ol>
-            <li>Click on the toggle in the bottom right corner</li>
-            <li><em>Optional:</em> Click on a highlight color to filter annotations</li>
-            <li>Click on any annotation to be directed to it</li>
-          </ol>
-      </ol>
-    </p>
-
     <a href="./api.html" class="button">
       API & Documentation
     </a>
-
+    <br/>
+    <br/>
+    <div class="subheading">
+      Try it out:
+    </div>
+    <p id="demo">
+      <ol id="demo__list">
+        <li>Select some text on this page</li>
+        <li>A tooltip will appear</li>
+        <li>Pick a predefined highlight color or click on the last one to use your own</li>
+        <li><em>Optional:</em> Add a comment</li>
+        <li>Click on a highlight to modify it</li>
+        <li>Repeat!</li>
+        <li>Refresh the page to see that the annotations you just made persist!</li>
+        <li>Navigate your annotations:</li>
+          <ol>
+            <li>Click on the toggle in the bottom right corner</li>
+            <li><em>Optional:</em> Click on a highlight color to filter annotations (click again to reset)</li>
+            <li>Click on any annotation to be directed to it</li>
+          </ol>
+          
+        </ol>
+      <br/>
+    </p>
     <div class="long-text">
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus finibus ipsum eros, sed eleifend enim placerat at. Ut sit amet tortor mauris. Aenean tristique at ligula ac finibus. Pellentesque sit amet quam pulvinar quam varius rutrum. Integer non bibendum arcu. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus magna lacus, laoreet quis erat sed, semper ultrices metus. In ac dolor non lacus pellentesque finibus.
@@ -73,21 +75,9 @@
         Suspendisse pellentesque ex in tellus tincidunt, at gravida lacus scelerisque. Sed at sodales dolor. Cras fringilla, enim nec porttitor porttitor, lacus diam fringilla leo, vitae pellentesque elit magna vitae ligula. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean massa lorem, aliquet sed mi quis, finibus accumsan neque. Nulla non nisl non diam consequat feugiat. Ut at molestie lorem. Morbi justo est, pretium sed scelerisque vitae, vulputate ut lacus. Ut ultricies sed tortor eu rhoncus. Donec in imperdiet mauris. Vestibulum faucibus malesuada sem, vitae gravida eros finibus non. Quisque sagittis bibendum elementum.
       </p>
     </div>
-    
-    <!-- TODO: store this list in localstorage -->
-    <!-- <h2 class="use-case">3. Annotate dynamically changing content</h2>
-    <div class="growing-content-wrapper">
-      <button onclick="insertRow()">Add content</button>
-      <table id="growing-table">
-          <tr>
-            <th>Some column</th>
-            <th>Another column</th>
-          </tr>
-      </table>
-    </div> -->
-    
+  
     <!-- Anchor for annotate.js tooltip -->
-    <div id="__annotate-tooltip__" style="visibility: hidden"></div>
+    <div id="__annotate-tooltip__" ></div>
     </div>
   </body>
 </html>
