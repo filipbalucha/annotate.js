@@ -34,7 +34,7 @@
     <div class="code-block">
       <pre><code class="language-html">
 &lt;script defer type="text/javascript" src="http://annotatejs.herokuapp.com/js/annotate/annotate.js"&gt;&lt;/script&gt;
-&lt;link rel="stylesheet" href="http://annotatejs.herokuapp.com/js/annotate/annotate.css"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="http://annotatejs.herokuapp.com/js/annotate/annotate.css" /&gt;
       </code></pre>
     </div>
     <p>Then, initialize annotate.js in a JavaScript file as follows:</p>
@@ -49,7 +49,11 @@ const showNavigator = true;
 new Annotate(colors, showNavigator);
       </code></pre>
     </div>
-    <p>This will make annotate.js listen to selections.</p>
+    <p>
+      This will make the annotate.js tooltip appear on text selection. Based on
+      your preference, it will make the toggle and navigator appear in the
+      bottom right corner of your web page.
+    </p>
     <br />
     <div class="category">API</div>
     <p>
