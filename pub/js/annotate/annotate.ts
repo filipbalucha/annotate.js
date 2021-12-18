@@ -834,15 +834,6 @@
   window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
 
-// - color picking - allow the end users to select their own highlight color using a color picker
-
-// - remove todos, remove comments
-
-// - webpage
-// - README
-
-// - store annotation IDs in a separate entry in local storage to prevent parsing everything - local storage manager???
-
 // future considerations:
 // - cleaner files
 // -> move CSS to TS
