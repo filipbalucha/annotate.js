@@ -134,7 +134,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 if (_this.navigatorManager) {
                     var annotationElements = document.getElementsByClassName(AnnotationManager.CLASS_HIGHLIGHT);
                     _this.navigatorManager.update(annotationElements, _this.annotations, function (element, annotation) {
-                        console.log(element);
                         _this.tooltipManager.showTooltip(annotation.comment, element, function (color) { return _this.updateAnnotationColor(annotation, color); }, function (comment) { return _this.updateAnnotationComment(annotation, comment); }, function () { return _this.deleteAnnotation(annotation); });
                     });
                 }

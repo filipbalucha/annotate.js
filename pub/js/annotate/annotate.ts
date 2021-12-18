@@ -190,7 +190,6 @@
           annotationElements as HTMLCollectionOf<HTMLElement>,
           this.annotations,
           (element: HTMLElement, annotation: Annotation) => {
-            console.log(element);
             this.tooltipManager.showTooltip(
               annotation.comment,
               element,
