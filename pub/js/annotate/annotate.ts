@@ -741,7 +741,7 @@
         card.style.backgroundColor = highlightColor;
         card.className = NavigatorManager.CLASS_NAVIGATOR_CARD;
         if (comment) {
-          card.innerText = comment.substring(0, 20);
+          card.innerText = comment;
         } else {
           card.style.fontStyle = "italic";
           card.innerText = `"${annotation.highlightedString}"`;
@@ -839,9 +839,11 @@
 })(window, window.document);
 
 // future considerations:
-// - communicate with others
-// -> implement callbacks for storing, updating and removing annotations
-// -> possibly emit custom events?
+// - look into ways we could stop working with regex as it causes some issues when mixed with special characters
+// - improve API
+// -> callbacks for storing, updating and removing annotations
+// -> possibly emit custom events
+// -> take a list of what tags, class names, IDs can / cannot be selected
 // - improve UX:
 //    -> freeze selection, make it stay as long as tooltip is open?
 //    -> animations
@@ -852,8 +854,6 @@
 // -> move CSS to TS
 // -> separate files
 // -> compile into a single js file in a separate directory
-// - cleanup
-// -> stop working with regex and use text instead? implement in parallel before removing regex!
 // - extend API - add callbacks? annotation created, changed, ...
 // - selection across nodes
 //    -> would need a regex that can match words across nodes (probably - depends on the string returned by selection in case the selection is multi-node)
