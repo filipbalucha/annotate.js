@@ -353,6 +353,9 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                     colorButton.style.backgroundColor = color;
                     buttons.appendChild(colorButton);
                 }
+                var verticalDivider = document.createElement("div");
+                verticalDivider.className = "__annotate-vertical-divider__";
+                buttons.appendChild(verticalDivider);
                 var colorInput = document.createElement("input");
                 colorInput.type = "color";
                 colorInput.id = TooltipManager.ID_COLOR_PICKER;
@@ -444,6 +447,12 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 for (var i = 0; i < colorButtons.length; i++) {
                     _loop_1(i);
                 }
+                // Bind actions to color picker
+                var colorPicker = document.getElementById(TooltipManager.ID_COLOR_PICKER);
+                colorPicker.oninput = function (e) {
+                    var newColor = e.target.value;
+                    selectColorCallback(newColor);
+                };
             };
             this.colors = colors;
             this.tooltip = document.getElementById(TooltipManager.ID_TOOLTIP);

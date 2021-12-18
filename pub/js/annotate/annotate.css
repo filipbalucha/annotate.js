@@ -31,6 +31,13 @@
   cursor: pointer;
 }
 
+#__annotate-tooltip__ .__annotate-vertical-divider__ {
+  border-left: 1px solid gray;
+  height: 1rem;
+  margin-left: 2px;
+  margin-right: 1px;
+}
+
 #__annotate-color-picker__ {
   border-radius: 50%;
   border: none;

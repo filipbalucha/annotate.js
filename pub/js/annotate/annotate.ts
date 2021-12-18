@@ -489,6 +489,10 @@
         buttons.appendChild(colorButton);
       }
 
+      const verticalDivider = document.createElement("div");
+      verticalDivider.className = "__annotate-vertical-divider__";
+      buttons.appendChild(verticalDivider);
+
       const colorInput = document.createElement("input");
       colorInput.type = "color";
       colorInput.id = TooltipManager.ID_COLOR_PICKER;
@@ -604,6 +608,15 @@
           selectColorCallback(newColor);
         };
       }
+
+      // Bind actions to color picker
+      const colorPicker = document.getElementById(
+        TooltipManager.ID_COLOR_PICKER
+      ) as HTMLInputElement;
+      colorPicker.oninput = (e: Event) => {
+        const newColor = (e.target as HTMLInputElement).value;
+        selectColorCallback(newColor);
+      };
     };
   }
 
