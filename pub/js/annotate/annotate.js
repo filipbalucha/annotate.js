@@ -17,16 +17,9 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 return id;
             };
             /**
-             * Returns the position of anchor within its parent element.
-             *
-             * This is necessary to disambiguate the match within the anchor from matches
+             * Computes the position of anchor within its parent element. This is
+             * necessary to disambiguate the match within the anchor from matches
              * occurring earlier in its parent.
-             *
-             * @param {Node} anchor
-             * @param {number} anchorOffset
-             * @param {RegExp} regex
-             * @returns {number}
-             * @memberof Annotation
              */
             this.positionWithinParentElement = function (anchor, anchorOffset, regex) {
                 var gRegex = new RegExp(regex, "g");
@@ -37,17 +30,11 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             };
             /**
              * Returns a regex corresponding to the input string that can be matched against
-             * innerHTML of a DOM element.
-             *
-             * Using regex is necessary because innerHTML may contain line breaks and other
-             * spaces that the Selection does not capture.
-             *
-             * @param {string} string
-             * @returns {RegExp}
-             * @memberof Annotation
+             * innerHTML of a DOM element. Using regex is necessary because innerHTML may
+             * contain line breaks and other spaces that the Selection does not capture.
              */
             this.innerHtmlReadyRegex = function (string) {
-                // This pattern will ignore space, line feed and other Unicode spaces between the words
+                // Ignore space, line feed and other Unicode spaces between the words
                 var pattern = string.replace(/\s+/g, "(\\s+)");
                 var regex = new RegExp(pattern);
                 return regex;
@@ -55,17 +42,14 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             /**
              * Computes the offset of the anchor node within its parent element
              * by iterating over the contents of all its left siblings.
-             *
-             * @param {Node} anchor
-             *
-             * @returns {number}
-             * @memberof Annotation
              */
             this.preAnchorOffset = function (anchor) {
                 var preAnchorOffset = 0;
                 var leftSibling = anchor.previousSibling;
                 while (leftSibling) {
+                    // @ts-ignore
                     if (leftSibling.outerHTML) {
+                        // @ts-ignore
                         preAnchorOffset += leftSibling.outerHTML.length;
                     }
                     else if (leftSibling.textContent) {
@@ -84,9 +68,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
              * (this is the tag of the element which we should follow at the given
              * step) and a number (this is to determine which child with that tag
              * we should follow)
-             *
-             * @param  {Node} node
-             * @returns {[[string, number]]}
              */
             this.pathTo = function (node) {
                 var path = [];
@@ -129,10 +110,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
          * A node can be highlighted iff neither it nor its parent are already
          * highlighted.
          *
-         * @static
-         * @param {Node} anchorNode
-         * @returns {boolean}
-         * @memberof Annotation
          */
         Annotation.canHighlight = function (anchorNode) {
             var highlighted = function (el) {
@@ -231,11 +208,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 }
                 return null;
             };
-            /**
-             * Determines which element contains the highlight.
-             *
-             * @param  {[[string, number]]} path
-             */
             this.elementWithHighlight = function (path) {
                 if (path.length === 0) {
                     return null;

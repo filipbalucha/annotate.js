@@ -42,16 +42,9 @@
     };
 
     /**
-     * Returns the position of anchor within its parent element.
-     *
-     * This is necessary to disambiguate the match within the anchor from matches
+     * Computes the position of anchor within its parent element. This is
+     * necessary to disambiguate the match within the anchor from matches
      * occurring earlier in its parent.
-     *
-     * @param {Node} anchor
-     * @param {number} anchorOffset
-     * @param {RegExp} regex
-     * @returns {number}
-     * @memberof Annotation
      */
     positionWithinParentElement = (
       anchor: Node,
@@ -70,17 +63,11 @@
 
     /**
      * Returns a regex corresponding to the input string that can be matched against
-     * innerHTML of a DOM element.
-     *
-     * Using regex is necessary because innerHTML may contain line breaks and other
-     * spaces that the Selection does not capture.
-     *
-     * @param {string} string
-     * @returns {RegExp}
-     * @memberof Annotation
+     * innerHTML of a DOM element. Using regex is necessary because innerHTML may
+     * contain line breaks and other spaces that the Selection does not capture.
      */
-    innerHtmlReadyRegex = (string) => {
-      // This pattern will ignore space, line feed and other Unicode spaces between the words
+    innerHtmlReadyRegex = (string): RegExp => {
+      // Ignore space, line feed and other Unicode spaces between the words
       const pattern = string.replace(/\s+/g, "(\\s+)");
       const regex = new RegExp(pattern);
 
@@ -90,17 +77,14 @@
     /**
      * Computes the offset of the anchor node within its parent element
      * by iterating over the contents of all its left siblings.
-     *
-     * @param {Node} anchor
-     *
-     * @returns {number}
-     * @memberof Annotation
      */
-    preAnchorOffset = (anchor) => {
+    preAnchorOffset = (anchor: Node): number => {
       let preAnchorOffset = 0;
       let leftSibling = anchor.previousSibling;
       while (leftSibling) {
+        // @ts-ignore
         if (leftSibling.outerHTML) {
+          // @ts-ignore
           preAnchorOffset += leftSibling.outerHTML.length;
         } else if (leftSibling.textContent) {
           preAnchorOffset += leftSibling.textContent.length;
@@ -121,9 +105,6 @@
      * (this is the tag of the element which we should follow at the given
      * step) and a number (this is to determine which child with that tag
      * we should follow)
-     *
-     * @param  {Node} node
-     * @returns {[[string, number]]}
      */
     pathTo = (node: Element): Path => {
       const path = [];
@@ -162,10 +143,6 @@
      * A node can be highlighted iff neither it nor its parent are already
      * highlighted.
      *
-     * @static
-     * @param {Node} anchorNode
-     * @returns {boolean}
-     * @memberof Annotation
      */
     static canHighlight = (anchorNode: Node): boolean => {
       const highlighted = (el) =>
@@ -316,11 +293,6 @@
       return null;
     };
 
-    /**
-     * Determines which element contains the highlight.
-     *
-     * @param  {[[string, number]]} path
-     */
     elementWithHighlight = (path: Path): Element => {
       if (path.length === 0) {
         return null;
