@@ -599,6 +599,8 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
 // future considerations:
+// - improve working with localStorage
+// -> store a list of annotation IDs to look for rather than trying to parse all entries
 // - cleaner files
 // -> move CSS to TS
 // -> separate files
