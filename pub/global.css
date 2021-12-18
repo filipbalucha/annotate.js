@@ -8,9 +8,8 @@ body {
   align-items: center;
 }
 
-div,
 p {
-  max-width: 50ch;
+  max-width: 60ch;
 }
 
 a:visited {
