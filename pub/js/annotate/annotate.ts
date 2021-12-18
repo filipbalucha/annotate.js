@@ -429,10 +429,7 @@
 
     constructor(colors) {
       this.colors = colors;
-      this.tooltip = document.getElementById(TooltipManager.ID_TOOLTIP);
-      this.addDeleteButton();
-      this.addCommentArea();
-      this.addColorButtons();
+      this.insertTooltipIntoDOM();
     }
 
     wasClicked = (target: Element): boolean => {
@@ -449,6 +446,15 @@
     };
 
     // DOM manipulation:
+    insertTooltipIntoDOM = (): void => {
+      this.tooltip = document.createElement("div");
+      this.tooltip.id = TooltipManager.ID_TOOLTIP;
+      this.addDeleteButton();
+      this.addCommentArea();
+      this.addColorButtons();
+      document.body.appendChild(this.tooltip);
+    };
+
     addColorButtons = (): void => {
       const buttons = document.createElement("div");
       buttons.className = TooltipManager.CLASS_COLOR_ROW;
@@ -833,6 +839,9 @@
 })(window, window.document);
 
 // future considerations:
+// - communicate with others
+// -> implement callbacks for storing, updating and removing annotations
+// -> possibly emit custom events?
 // - improve UX:
 //    -> freeze selection, make it stay as long as tooltip is open?
 //    -> animations

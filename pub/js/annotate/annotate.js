@@ -314,6 +314,14 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 _this.tooltip.appendChild(deleteButton);
             };
             // DOM manipulation:
+            this.insertTooltipIntoDOM = function () {
+                _this.tooltip = document.createElement("div");
+                _this.tooltip.id = TooltipManager.ID_TOOLTIP;
+                _this.addDeleteButton();
+                _this.addCommentArea();
+                _this.addColorButtons();
+                document.body.appendChild(_this.tooltip);
+            };
             this.addColorButtons = function () {
                 var buttons = document.createElement("div");
                 buttons.className = TooltipManager.CLASS_COLOR_ROW;
@@ -427,10 +435,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                 };
             };
             this.colors = colors;
-            this.tooltip = document.getElementById(TooltipManager.ID_TOOLTIP);
-            this.addDeleteButton();
-            this.addCommentArea();
-            this.addColorButtons();
+            this.insertTooltipIntoDOM();
         }
         TooltipManager.ID_TOOLTIP = "__annotate-tooltip__";
         TooltipManager.ID_COMMENT = "__annotate-comment__";
@@ -603,6 +608,9 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     window["Annotate"] = window["Annotate"] || Annotate;
 })(window, window.document);
 // future considerations:
+// - communicate with others
+// -> implement callbacks for storing, updating and removing annotations
+// -> possibly emit custom events?
 // - improve UX:
 //    -> freeze selection, make it stay as long as tooltip is open?
 //    -> animations
