@@ -58,7 +58,7 @@
   background-color: rgb(243, 241, 241);
 }
 
-#__annotate-delete__ {
+#__annotate-tooltip-delete__ {
   align-self: flex-end;
   border: none;
   margin: 4.5px;
@@ -69,7 +69,7 @@
   border: 1px solid gray;
 }
 
-#__annotate-delete__:hover {
+#__annotate-tooltip-delete__:hover {
   cursor: pointer;
   background-color: rgb(236, 234, 234);
 }
@@ -105,6 +105,21 @@
   overflow-y: scroll;
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+#__annotate-navigator-close__ {
+  align-self: flex-end;
+  display: flex;
+  padding: 4px;
+  border-radius: 50%;
+  background-color: rgb(243, 241, 241);
+  border: 1px solid gray;
+  position: fixed;
+}
+
+#__annotate-navigator-close__:hover {
+  cursor: pointer;
+  background-color: rgb(236, 234, 234);
 }
 
 #__annotate-navigator__::-webkit-scrollbar {

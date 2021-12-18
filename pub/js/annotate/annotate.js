@@ -434,7 +434,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
         }
         TooltipManager.ID_TOOLTIP = "__annotate-tooltip__";
         TooltipManager.ID_COMMENT = "__annotate-comment__";
-        TooltipManager.ID_DELETE_BUTTON = "__annotate-delete__";
+        TooltipManager.ID_DELETE_BUTTON = "__annotate-tooltip-delete__";
         TooltipManager.ID_COLOR_PICKER = "__annotate-color-picker__";
         TooltipManager.COLOR_ATTRIBUTE = "annotate-color";
         TooltipManager.CLASS_COLOR_BUTTON = "__annotate-color__";
@@ -450,6 +450,12 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
             this.update = function (sortedAnnotations, annotationDetails, annotationCardClickedCallback) {
                 var prevScrollTop = _this.scrollTop();
                 _this.navigator.replaceChildren();
+                var closeButton = document.createElement("button");
+                var side = "1rem";
+                closeButton.innerHTML = "<svg fill=\"gray\" xmlns=\"http://www.w3.org/2000/svg\" width=".concat(side, " height=").concat(side, " viewBox=\"0 0 24 24\"><path d=\"M 4.7070312 3.2929688 L 3.2929688 4.7070312 L 10.585938 12 L 3.2929688 19.292969 L 4.7070312 20.707031 L 12 13.414062 L 19.292969 20.707031 L 20.707031 19.292969 L 13.414062 12 L 20.707031 4.7070312 L 19.292969 3.2929688 L 12 10.585938 L 4.7070312 3.2929688 z\"/></svg>");
+                closeButton.id = NavigatorManager.ID_CLOSE_BUTTON;
+                closeButton.onclick = _this.collapseNavigator;
+                _this.navigator.appendChild(closeButton);
                 var filter = _this.colorFilter(sortedAnnotations, annotationDetails, annotationCardClickedCallback);
                 _this.navigator.appendChild(filter);
                 var cards = _this.annotationCards(sortedAnnotations, annotationDetails, annotationCardClickedCallback);
@@ -553,6 +559,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
         }
         NavigatorManager.ID_NAVIGATOR = "__annotate-navigator__";
         NavigatorManager.ID_TOGGLE = "__annotate-toggle__";
+        NavigatorManager.ID_CLOSE_BUTTON = "__annotate-navigator-close__";
         NavigatorManager.CLASS_NAVIGATOR_CARD = "__annotate-navigator__card__";
         NavigatorManager.CLASS_NAVIGATOR_CARDS = "__annotate-navigator__cards__";
         NavigatorManager.CLASS_FILTER_ROW = "__annotate-filter__";
@@ -563,16 +570,13 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
         function Annotate(colors, showNavigator) {
             var _this = this;
             this.handleMouseUp = function (event) {
-                var _a, _b;
+                var _a;
                 var selection = window.getSelection();
                 var anchorNode = selection.anchorNode, focusNode = selection.focusNode;
                 var target = event.target;
                 var clickedNavigator = (_a = _this.navigatorManager) === null || _a === void 0 ? void 0 : _a.wasClicked(target);
                 if (clickedNavigator) {
                     return;
-                }
-                else {
-                    (_b = _this.navigatorManager) === null || _b === void 0 ? void 0 : _b.collapseNavigator();
                 }
                 var clickedTooltip = _this.tooltipManager.wasClicked(target);
                 if (!clickedTooltip) {

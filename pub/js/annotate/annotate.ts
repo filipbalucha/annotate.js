@@ -415,7 +415,7 @@
   class TooltipManager {
     private static readonly ID_TOOLTIP = "__annotate-tooltip__";
     private static readonly ID_COMMENT = "__annotate-comment__";
-    private static readonly ID_DELETE_BUTTON = "__annotate-delete__";
+    private static readonly ID_DELETE_BUTTON = "__annotate-tooltip-delete__";
     private static readonly ID_COLOR_PICKER = "__annotate-color-picker__";
     private static readonly COLOR_ATTRIBUTE = "annotate-color";
     private static readonly CLASS_COLOR_BUTTON = "__annotate-color__";
@@ -595,6 +595,7 @@
   class NavigatorManager {
     private static readonly ID_NAVIGATOR = "__annotate-navigator__";
     private static readonly ID_TOGGLE = "__annotate-toggle__";
+    private static readonly ID_CLOSE_BUTTON = "__annotate-navigator-close__";
     private static readonly CLASS_NAVIGATOR_CARD =
       "__annotate-navigator__card__";
     private static readonly CLASS_NAVIGATOR_CARDS =
@@ -626,6 +627,14 @@
       const prevScrollTop = this.scrollTop();
 
       this.navigator.replaceChildren();
+
+      const closeButton = document.createElement("button");
+      const side = "1rem";
+      closeButton.innerHTML = `<svg fill="gray" xmlns="http://www.w3.org/2000/svg" width=${side} height=${side} viewBox="0 0 24 24"><path d="M 4.7070312 3.2929688 L 3.2929688 4.7070312 L 10.585938 12 L 3.2929688 19.292969 L 4.7070312 20.707031 L 12 13.414062 L 19.292969 20.707031 L 20.707031 19.292969 L 13.414062 12 L 20.707031 4.7070312 L 19.292969 3.2929688 L 12 10.585938 L 4.7070312 3.2929688 z"/></svg>`;
+      closeButton.id = NavigatorManager.ID_CLOSE_BUTTON;
+      closeButton.onclick = this.collapseNavigator;
+
+      this.navigator.appendChild(closeButton);
 
       const filter = this.colorFilter(
         sortedAnnotations,
@@ -800,8 +809,6 @@
       const clickedNavigator = this.navigatorManager?.wasClicked(target);
       if (clickedNavigator) {
         return;
-      } else {
-        this.navigatorManager?.collapseNavigator();
       }
 
       const clickedTooltip = this.tooltipManager.wasClicked(target);
