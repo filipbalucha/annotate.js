@@ -353,6 +353,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
                     colorButton.style.backgroundColor = color;
                     buttons.appendChild(colorButton);
                 }
+                var colorInput = document.createElement("input");
+                colorInput.type = "color";
+                colorInput.id = TooltipManager.ID_COLOR_PICKER;
+                buttons.appendChild(colorInput);
                 _this.tooltip.appendChild(buttons);
             };
             this.addCommentArea = function () {
@@ -450,6 +454,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
         TooltipManager.ID_TOOLTIP = "__annotate-tooltip__";
         TooltipManager.ID_COMMENT = "__annotate-comment__";
         TooltipManager.ID_DELETE_BUTTON = "__annotate-delete__";
+        TooltipManager.ID_COLOR_PICKER = "__annotate-color-picker__";
         TooltipManager.COLOR_ATTRIBUTE = "annotate-color";
         TooltipManager.CLASS_COLOR_BUTTON = "__annotate-color__";
         TooltipManager.CLASS_COLOR_ROW = "__annotate-color-row__";

@@ -444,6 +444,7 @@
     private static readonly ID_TOOLTIP = "__annotate-tooltip__";
     private static readonly ID_COMMENT = "__annotate-comment__";
     private static readonly ID_DELETE_BUTTON = "__annotate-delete__";
+    private static readonly ID_COLOR_PICKER = "__annotate-color-picker__";
     private static readonly COLOR_ATTRIBUTE = "annotate-color";
     private static readonly CLASS_COLOR_BUTTON = "__annotate-color__";
     private static readonly CLASS_COLOR_ROW = "__annotate-color-row__";
@@ -487,6 +488,11 @@
         colorButton.style.backgroundColor = color;
         buttons.appendChild(colorButton);
       }
+
+      const colorInput = document.createElement("input");
+      colorInput.type = "color";
+      colorInput.id = TooltipManager.ID_COLOR_PICKER;
+      buttons.appendChild(colorInput);
       this.tooltip.appendChild(buttons);
     };
 
